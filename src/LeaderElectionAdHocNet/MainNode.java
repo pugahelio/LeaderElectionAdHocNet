@@ -5,115 +5,143 @@
  */
 package LeaderElectionAdHocNet;
 
+import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.SocketException;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
  * @author helio
  */
 public class MainNode {
-    private int ID;
-    private boolean deltaiElection;
-    private Node pi;
-    private boolean deltaiACK;
-    private Node lidi;
-    private Set<Node> ni;
-    private Set<Node> si;
-    private int srciNum;
-    private int nodeValue;
-    
-    public MainNode(int id) {
-        deltaiElection = false;
-        pi = null;
-        deltaiACK = false;
-        lidi = null;
-        ni = new HashSet<>();
-        si = new HashSet<>();
-        ID = id;
-        srciNum = 0;
+
+    //Leader election varibles
+    private int id;
+    private boolean deltaElection;
+    private int pId;
+    private boolean deltaACK;
+    private int lidId;
+    private Map<Integer, Node> n;
+    private Set<Integer> s;
+    private int src;
+
+    //Comunicações
+    private int nodePort;
+    private DatagramSocket socket;
+    private DatagramPacket packetIn;
+    private byte[] bufIn = new byte[2048];
+
+    public MainNode() {
+        deltaElection = false;
+        pId = -1;
+        deltaACK = false;
+        lidId = -1;
+        n = new HashMap<>();
+        s = new HashSet<>();
+        this.id = -1;
+        src = 0;
+        this.nodePort = -1;
     }
-    
-    public void setNodeValue(int nodeValue) {
-        this.nodeValue = nodeValue;
+
+    public Message getMessage() {
+        packetIn = new DatagramPacket(bufIn, bufIn.length);
+        Message msg;
+        String trama;
+        do {
+            try {
+                socket.receive(packetIn);
+            } catch (IOException ex) {
+                Logger.getLogger(Node.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            trama = new String(packetIn.getData(), 0, packetIn.getLength());
+            msg = new Message(trama);
+        } while (msg.getDestId() != id);
+        return msg;
     }
-    
+
+    public void setNodePort(int nodePort) {
+        this.nodePort = nodePort;
+        try {
+            socket = new DatagramSocket(this.nodePort);
+        } catch (SocketException ex) {
+            Logger.getLogger(MainNode.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
     //1- se esta numa eleiçao, 0 senão
     public void setDeltaiElection(boolean deltaiElection) {
-        this.deltaiElection = deltaiElection;
+        this.deltaElection = deltaiElection;
     }
-    
+
     //parent node
-    public void setPi(Node pi) {
-        this.pi = pi;
+    public void setP(int pId) {
+        this.pId = pId;
     }
 
     //se já deu ACK ao parente ou não
-    public void setDeltaiACK(boolean deltaiACK) {
-        this.deltaiACK = deltaiACK;
+    public void setDeltaACK(boolean deltaACK) {
+        this.deltaACK = deltaACK;
     }
 
     //lider
-    public void setLidi(Node lidi) {
-        this.lidi = lidi;
+    public void setLid(int lidId) {
+        this.lidId = lidId;
     }
 
     //vizinhos currentes
-    public void setNi(Set<Node> ni) {
-        this.ni = ni;
+    public void addN(Node n) {
+        this.n.put(n.getId(), n);
     }
-    
+
     //set de nós que falta ouvir ACK
-    public void setSi(Set<Node> si) {
-        this.si = si;
-    }
-       
-    public void setNodeID(int nodeID) {   
-        this.ID = nodeID;
+    public void addS(int s) {
+        this.s.add(s);
     }
 
-    public void setSrciNum(int srciNum) {
-        this.srciNum = srciNum;
+    public void setSrc(int src) {
+        this.src = src;
     }
 
-    //computation index
-    public void setSrci(int srci) {
-        this.srciNum = srci;
+    public void setId(int id) {
+        this.id = id;
     }
 
-    public int getNodeID() {
-        return ID;
+    public int getId() {
+        return id;
     }
 
-    public boolean isDeltaiElection() {
-        return deltaiElection;
+    public boolean isDeltaElection() {
+        return deltaElection;
     }
 
-    public Node getPi() {
-        return pi;
+    public int getP() {
+        return pId;
     }
 
-    public boolean isDeltaiACK() {
-        return deltaiACK;
+    public boolean isDeltaACK() {
+        return deltaACK;
     }
 
-    public Node getLidi() {
-        return lidi;
+    public int getLid() {
+        return lidId;
     }
 
-    public Set<Node> getNi() {
-        return ni;
+    public Map<Integer, Node> getN() {
+        return n;
     }
 
-    public Set<Node> getSi() {
-        return si;
+    public Set<Integer> getS() {
+        return s;
     }
 
-    public int getSrciNum() {
-        return srciNum;
-    }
-
-    public int getNodeValue() {
-        return nodeValue;
+    public int getSrc() {
+        return src;
     }
 }

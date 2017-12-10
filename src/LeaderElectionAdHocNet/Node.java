@@ -13,109 +13,103 @@ import java.net.SocketException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- *
- * @author helio
- */
+
 public class Node {
+    private int mainNodeId;
     private InetAddress nodeAddress;
     private int nodePort;
-    private int ID;
-    private DatagramSocket socket, socketIn;
+    private int id;
+    private DatagramSocket socketOut;
     private byte[] bufOut = new byte[2048];
-    private byte[] bufIn = new byte[2048];
     private DatagramPacket packetOut;
-    private DatagramPacket packetIn;
+    private int msgId;
 
-    public Node(int id, int port, InetAddress nodeAddr) {
-        ID = id;
-        nodePort = port;
+    public Node(int neighborId, int portDest, InetAddress nodeAddr, int mainNodeId) {
+        msgId = 0;
+        id = neighborId;
+        this.mainNodeId = mainNodeId; 
+        nodePort = portDest;
         nodeAddress = nodeAddr;
         try {
-            socket = new DatagramSocket(nodePort);
-            //socketIn = new DatagramSocket(portMainNode);
+            socketOut = new DatagramSocket();
         } catch (SocketException ex) {
-            Logger.getLogger(Communication.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(Node.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
-    public Message getMessage() {
-        packetIn = new DatagramPacket(bufIn, bufIn.length);
-        Message msg;
-        String trama;
-        do {
-            try {
-                socket.receive(packetIn);
-            } catch (IOException ex) {
-                Logger.getLogger(Communication.class.getName()).log(Level.SEVERE, null, ex);
-            }
-            trama = new String(packetIn.getData(), 0, packetIn.getLength());
-            msg = new Message(trama);
-        } while (msg.getIdNode() != ID);
-
-        return msg;
+    public int getId(){
+        return id;
     }
 
     public void sendElection(int src) {
-        Message msg = new Message(ID, 1, "ELECTION", Integer.toString(src));
-        
+        Message msg = new Message(msgId, mainNodeId, id, "ELECTION", Integer.toString(src));
+
         bufOut = msg.getTrama().getBytes();
-        
+
         packetOut = new DatagramPacket(bufOut, bufOut.length, nodeAddress, nodePort);
+
         try {
-            socket.send(packetOut);
+            socketOut.send(packetOut);
         } catch (IOException ex) {
-            Logger.getLogger(Communication.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(Node.class.getName()).log(Level.SEVERE, null, ex);
         }
+        msgId++;
+
     }
 
     public void sendAck() {
-        Message msg = new Message(ID, 1, "ACK", null);
+        Message msg = new Message(msgId, mainNodeId, id, "ACK", null);
 
         bufOut = msg.getTrama().getBytes();
         
         packetOut = new DatagramPacket(bufOut, bufOut.length, nodeAddress, nodePort);
         try {
-            socket.send(packetOut);
+            socketOut.send(packetOut);
         } catch (IOException ex) {
             Logger.getLogger(Communication.class.getName()).log(Level.SEVERE, null, ex);
         }
+        msgId++;
+        System.err.println("Porta de destino: " + nodePort + ", IP destino: " + nodeAddress.getHostAddress() + " " + msg.getTrama());
+        
     }
 
     public void sendLeader(int leaderID) {
-        Message msg = new Message(ID, 1, "LEADER", Integer.toString(leaderID));
+        Message msg = new Message(msgId, mainNodeId, id, "LEADER", Integer.toString(leaderID));
 
         bufOut = msg.getTrama().getBytes();
         
         packetOut = new DatagramPacket(bufOut, bufOut.length, nodeAddress, nodePort);
         try {
-            socket.send(packetOut);
+            socketOut.send(packetOut);
         } catch (IOException ex) {
             Logger.getLogger(Communication.class.getName()).log(Level.SEVERE, null, ex);
         }
+        msgId++;
     }
 
     public void sendProbe() {
-        Message msg = new Message(ID, 1, "PROBE", null);
+        Message msg = new Message(msgId, mainNodeId, id, "PROBE", null);
 
         bufOut = msg.getTrama().getBytes();
         packetOut = new DatagramPacket(bufOut, bufOut.length, nodeAddress, nodePort);
         try {
-            socket.send(packetOut);
+            socketOut.send(packetOut);
         } catch (IOException ex) {
             Logger.getLogger(Communication.class.getName()).log(Level.SEVERE, null, ex);
         }
+        msgId++;
     }
 
     public void sendReply() {
-        Message msg = new Message(ID, 1, "REPLY", null);
+        Message msg = new Message(msgId, mainNodeId, id, "REPLY", null);
         
         bufOut = msg.getTrama().getBytes();
         packetOut = new DatagramPacket(bufOut, bufOut.length, nodeAddress, nodePort);
         try {
-            socket.send(packetOut);
+            socketOut.send(packetOut);
         } catch (IOException ex) {
             Logger.getLogger(Communication.class.getName()).log(Level.SEVERE, null, ex);
         }
+        msgId++;
     }
 }
