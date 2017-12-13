@@ -30,7 +30,8 @@ public class MainNode {
     private int lidId;
     private Map<Integer, Node> n;
     private Set<Integer> s;
-    private int src;
+    private int srcNum;
+    private int srcId;
 
     //Comunicações
     private int nodePort;
@@ -46,10 +47,19 @@ public class MainNode {
         n = new HashMap<>();
         s = new HashSet<>();
         this.id = -1;
-        src = 0;
+        srcNum = 0;
+        srcId = this.id;
         this.nodePort = -1;
     }
 
+    public void resetElection(){
+        deltaElection = false;
+        pId = -1;
+        deltaACK = false;
+        lidId = -1;
+        s.removeAll(s);
+    }
+    
     public Message getMessage() {
         packetIn = new DatagramPacket(bufIn, bufIn.length);
         Message msg;
@@ -63,6 +73,7 @@ public class MainNode {
             trama = new String(packetIn.getData(), 0, packetIn.getLength());
             msg = new Message(trama);
         } while (msg.getDestId() != id);
+        System.err.println("Recebido: " + msg.getTrama());
         return msg;
     }
 
@@ -75,38 +86,51 @@ public class MainNode {
         }
     }
 
-    //1- se esta numa eleiçao, 0 senão
+    /**
+    *1- se esta numa eleiçao, 0 senão
+    */
     public void setDeltaiElection(boolean deltaiElection) {
         this.deltaElection = deltaiElection;
     }
 
-    //parent node
+    /**
+     * parent node
+     */
     public void setP(int pId) {
         this.pId = pId;
     }
 
-    //se já deu ACK ao parente ou não
+    /**
+     * se já deu ACK ao parente ou não
+     */
     public void setDeltaACK(boolean deltaACK) {
         this.deltaACK = deltaACK;
     }
 
-    //lider
+    /**
+     * lider
+     */
     public void setLid(int lidId) {
         this.lidId = lidId;
     }
 
-    //vizinhos currentes
+    /**
+     * vizinhos correntes
+     */
     public void addN(Node n) {
         this.n.put(n.getId(), n);
     }
 
-    //set de nós que falta ouvir ACK
+    /**
+     * set de nós que falta ouvir ACK
+     */
     public void addS(int s) {
         this.s.add(s);
     }
 
-    public void setSrc(int src) {
-        this.src = src;
+    public void setSrc(int srcNum, int srcId) {
+        this.srcNum = srcNum;
+        this.srcId = srcId;
     }
 
     public void setId(int id) {
@@ -141,7 +165,11 @@ public class MainNode {
         return s;
     }
 
-    public int getSrc() {
-        return src;
+    public int getSrcNum() {
+        return srcNum;
+    }
+    
+    public int getSrcId() {
+        return srcId;
     }
 }

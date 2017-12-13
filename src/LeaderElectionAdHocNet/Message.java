@@ -29,7 +29,27 @@ public class Message {
 
     public Message(String tramaCompleta) {
         trama = tramaCompleta;
+//        String[] dividido;
+//        
+//        dividido = trama.split("|");
+//        if (dividido.length > 0) {
+//            idMsg = dividido[0];
+//        }
+//        if (dividido.length > 1) {
+//            senderId = dividido[1];
+//        }
+//        if (dividido.length > 2) {
+//            destId = dividido[2];
+//        }
+//        if (dividido.length > 3) {
+//            typeMsg = dividido[3];
+//        }
+//        if (dividido.length > 4) {
+//            data = dividido[4];
+//        }
 
+        
+        
         int init = 0;
         int end = tramaCompleta.indexOf('|');
         idMsg = tramaCompleta.substring(init, end);
@@ -48,8 +68,10 @@ public class Message {
 
         init = end + 1;
         end = tramaCompleta.length();
-        if(end <= init) 
+        if(end > init) 
             data = tramaCompleta.substring(init, end);
+        
+        //System.out.println(idMsg + "!" + senderId + "!" + destId + "!" + typeMsg + "!" + data);
         
     }
 

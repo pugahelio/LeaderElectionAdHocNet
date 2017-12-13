@@ -27,7 +27,7 @@ public class Node {
     public Node(int neighborId, int portDest, InetAddress nodeAddr, int mainNodeId) {
         msgId = 0;
         id = neighborId;
-        this.mainNodeId = mainNodeId; 
+        this.mainNodeId = mainNodeId;
         nodePort = portDest;
         nodeAddress = nodeAddr;
         try {
@@ -37,12 +37,12 @@ public class Node {
         }
     }
 
-    public int getId(){
+    public int getId() {
         return id;
     }
 
-    public void sendElection(int src) {
-        Message msg = new Message(msgId, mainNodeId, id, "ELECTION", Integer.toString(src));
+    public void sendElection(int srcNum, int srcId) {
+        Message msg = new Message(msgId, mainNodeId, id, "ELECTION", Integer.toString(srcId) + "," + Integer.toString(srcNum));
 
         bufOut = msg.getTrama().getBytes();
 
@@ -54,14 +54,15 @@ public class Node {
             Logger.getLogger(Node.class.getName()).log(Level.SEVERE, null, ex);
         }
         msgId++;
+        System.err.println("Porta de destino: " + nodePort + ", IP destino: " + nodeAddress.getHostAddress() + " " + msg.getTrama());
 
     }
 
-    public void sendAck() {
-        Message msg = new Message(msgId, mainNodeId, id, "ACK", null);
+    public void sendAck(int mostValueNode) {
+        Message msg = new Message(msgId, mainNodeId, id, "ACK", Integer.toString(mostValueNode));
 
         bufOut = msg.getTrama().getBytes();
-        
+
         packetOut = new DatagramPacket(bufOut, bufOut.length, nodeAddress, nodePort);
         try {
             socketOut.send(packetOut);
@@ -70,14 +71,14 @@ public class Node {
         }
         msgId++;
         System.err.println("Porta de destino: " + nodePort + ", IP destino: " + nodeAddress.getHostAddress() + " " + msg.getTrama());
-        
+
     }
 
     public void sendLeader(int leaderID) {
         Message msg = new Message(msgId, mainNodeId, id, "LEADER", Integer.toString(leaderID));
 
         bufOut = msg.getTrama().getBytes();
-        
+
         packetOut = new DatagramPacket(bufOut, bufOut.length, nodeAddress, nodePort);
         try {
             socketOut.send(packetOut);
@@ -85,6 +86,8 @@ public class Node {
             Logger.getLogger(Communication.class.getName()).log(Level.SEVERE, null, ex);
         }
         msgId++;
+        System.err.println("Porta de destino: " + nodePort + ", IP destino: " + nodeAddress.getHostAddress() + " " + msg.getTrama());
+
     }
 
     public void sendProbe() {
@@ -98,11 +101,13 @@ public class Node {
             Logger.getLogger(Communication.class.getName()).log(Level.SEVERE, null, ex);
         }
         msgId++;
+        System.err.println("Porta de destino: " + nodePort + ", IP destino: " + nodeAddress.getHostAddress() + " " + msg.getTrama());
+
     }
 
     public void sendReply() {
         Message msg = new Message(msgId, mainNodeId, id, "REPLY", null);
-        
+
         bufOut = msg.getTrama().getBytes();
         packetOut = new DatagramPacket(bufOut, bufOut.length, nodeAddress, nodePort);
         try {
@@ -111,5 +116,7 @@ public class Node {
             Logger.getLogger(Communication.class.getName()).log(Level.SEVERE, null, ex);
         }
         msgId++;
+        System.err.println("Porta de destino: " + nodePort + ", IP destino: " + nodeAddress.getHostAddress() + " " + msg.getTrama());
+
     }
 }
