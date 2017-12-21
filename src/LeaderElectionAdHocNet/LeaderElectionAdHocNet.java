@@ -13,6 +13,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+
+// Falta verificar no heartbeat se quem morreu é o lider
+// Falta checkar o revive do nodo
+
 public class LeaderElectionAdHocNet {
 
     public static void main(String[] args) throws InterruptedException {
