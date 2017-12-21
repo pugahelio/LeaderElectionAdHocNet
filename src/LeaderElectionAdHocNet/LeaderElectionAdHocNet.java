@@ -5,56 +5,60 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.net.InetAddress;
+
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class LeaderElectionAdHocNet {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         MainNode myNode = new MainNode();
         configuration(myNode, args[0]);
         System.out.println("This Node ID: " + myNode.getId());
 
+        // Iniciar a thread de receber msg
+        myNode.threadR.start();
+
+        TimeUnit.SECONDS.sleep(1);
+
+        myNode.threadHbS.start();
+
+//        Message msg;
+//        while (true) {
+//
+//            msg = myNode.getMessage();
+//        }
         //Leader election algorithm
         stateMachineElection(myNode);
-        
-        System.out.println("Terminou");
-//        while (true) {
-//            
-//            
-//            
-//            if (myNode.getId() == 1) {
-//                myNode.getN().get(2).sendAck(myNode.getId());
-//                myNode.getN().get(3).sendAck(myNode.getId());
-//            } else {
-//                System.out.println("Mesage: " + myNode.getMessage().getTrama());
-//            }
-//        }
     }
 
-   
-private static void stateMachineElection(MainNode n) {
+    @SuppressWarnings("empty-statement")
+    private static void stateMachineElection(MainNode n) throws InterruptedException {
         String state = "STANDBY";
         Message msg = new Message("null|null|null|null|null");
         int mostValuedNode = n.getId();
         int srcNum = 0;
         int srcId = 0;
         while (true) {
-            
+            TimeUnit.SECONDS.sleep(1);
+
             switch (state) {
                 case "STANDBY":
-                    
+
                     n.resetElection();
-                    
+
                     if (n.getId() == 1 /*n.getLid() == -1 && !n.isDeltaElection()*/) {
                         state = "START_ELECTION";
                     } else {
-                        msg = n.getMessage();
+                        msg = n.getMessage(state);
                         if (msg.getTypeMsg().equals("ELECTION")) {
                             state = "CHECK_ELECTION";
+                        } else if ((msg.getTypeMsg().equals("LEADER")) && (msg.getData().equals(n.getLid()))) {
+                            state = "BROADCAST_LEADER";
                         }
                     }
                     break;
@@ -63,51 +67,61 @@ private static void stateMachineElection(MainNode n) {
                     //esta em eleiçao
                     n.setDeltaiElection(true);
                     //imcrementa o src
-                    n.setSrc(n.getSrcNum()+ 1, n.getId());
+                    n.setSrc(n.getSrcNum() + 1, n.getId());
                     //envia election a todos os vizinhos
 
                     for (Integer id : n.getN().keySet()) {
                         n.getN().get(id).sendElection(n.getSrcId(), n.getSrcNum());
-                        n.addS(id);
+                        if (n.getN().get(id).isAlive()) {
+                            System.err.println("Adicionei " + id);
+                            n.addS(id);
+                        }
                     }
-                    
+
                     state = "WAIT_ACK";
                     break;
-                    //espera por receber os ack todos para responder
-                    
+                //espera por receber os ack todos para responder
 
                 case "CHECK_ELECTION":
-                    
-                int init = 0;
-                int end =  msg.getData().indexOf(",");
-                srcNum =  Integer.parseInt(msg.getData().substring(init, end));
 
-                init = end + 1;
-                end =  msg.getData().length();
-                srcId =  Integer.parseInt(msg.getData().substring(init, end));
-                
-                //Se tiver src igual estou a falar do mesmo logo responde instataneamente.
-                if(srcNum == n.getSrcNum() && srcId == n.getSrcId()){
-                    n.getN().get(msg.getSenderId()).sendAck(mostValuedNode);                   
-                    state = "WAIT_ACK";
-                         
-                // Uma eleição com src superior
-                } else if (compareSrc(srcNum, srcId, n.getSrcNum(), n.getSrcId())){
-                    state = "RETRANSMIT_ELECTION";
-                }
-                else if(!(compareSrc(srcNum, srcId, n.getSrcNum(), n.getSrcId()))){
-                    state = "WAIT_ACK";
-                    System.out.println("src_num " + n.getSrcNum() + " src_id " + n.getSrcId() + " scrNum da mensagem " + srcNum + " scrId da mensagem " + srcId );
-                }
+                    int init = 0;
+                    int end = msg.getData().indexOf(",");
+                    srcNum = Integer.parseInt(msg.getData().substring(init, end));
 
-                break;   
-                
+                    init = end + 1;
+                    end = msg.getData().length();
+                    srcId = Integer.parseInt(msg.getData().substring(init, end));
+
+                    //Se tiver src igual estou a falar do mesmo logo responde instataneamente.
+                    if (srcNum == n.getSrcNum() && srcId == n.getSrcId()) {
+                        n.getN().get(msg.getSenderId()).sendAck(mostValuedNode);
+                        state = "WAIT_ACK";
+
+                        // Uma eleição com src superior
+                    } else if (compareSrc(srcNum, srcId, n.getSrcNum(), n.getSrcId())) {
+                        state = "RETRANSMIT_ELECTION";
+                    } else if (!(compareSrc(srcNum, srcId, n.getSrcNum(), n.getSrcId()))) {
+                        state = "WAIT_ACK";
+                        System.out.println("src_num " + n.getSrcNum() + " src_id " + n.getSrcId() + " scrNum da mensagem " + srcNum + " scrId da mensagem " + srcId);
+                    }
+
+                    break;
+
                 case "WAIT_ACK":
+
+                    msg = n.getMessage(state);
                     
-                    msg = n.getMessage();
-                    
-                    if(msg.getTypeMsg().equals("ACK")){
-                        
+                    if ((n.getS().isEmpty() && (n.getId() != n.getSrcId()))) {
+                        state = "ACK_TO_PARENT";
+                        break;
+                    } else if ((n.getS().isEmpty()) && (n.getId() == n.getSrcId())) {
+                        n.setLid(mostValuedNode);
+                        state = "BROADCAST_LEADER";
+                        break;
+                    }
+
+                    if (msg.getTypeMsg().equals("ACK")) {
+
                         //se receber um ack retira o nó da lista
                         n.getS().remove(msg.getSenderId());
                         int val = Integer.parseInt(msg.getData());
@@ -115,23 +129,17 @@ private static void stateMachineElection(MainNode n) {
                         if (val > mostValuedNode) {
                             mostValuedNode = val;
                         }
-                        
-                        if((n.getS().isEmpty() && (n.getId() != n.getSrcId()))){
-                            state = "ACK_TO_PARENT";
-                        }
-                        else if((n.getS().isEmpty()) && (n.getId() == n.getSrcId())){
-                            n.setLid(mostValuedNode);
-                            state = "BROADCAST_LEADER";
-                        }
-                    }
-                    else if(msg.getTypeMsg().equals("ELECTION")){
-                        
+                    } else if (msg.getTypeMsg().equals("ELECTION")) {
+
                         state = "CHECK_ELECTION";
+                    } else if ((msg.getTypeMsg().equals("LEADER")) && (msg.getData().equals(n.getLid()))) {
+                        state = "BROADCAST_LEADER";
                     }
+
                     break;
-                    
+
                 case "RETRANSMIT_ELECTION":
-                        
+
                     n.resetElection();
                     //esta no eleiçao
                     n.setDeltaiElection(true);
@@ -143,63 +151,69 @@ private static void stateMachineElection(MainNode n) {
                     for (Integer id : n.getN().keySet()) {
                         if (id != n.getP()) {
                             n.getN().get(id).sendElection(n.getSrcId(), n.getSrcNum());
-                            n.addS(id);
+                            if (n.getN().get(id).isAlive()) {
+                                System.err.println("Adicionei " + id);
+                                n.addS(id);
+                            }
                         }
                     }
-                        
-                        state = "WAIT_ACK";
-                        break;
-                        
+
+                    state = "WAIT_ACK";
+                    break;
+
                 case "ACK_TO_PARENT":
                     //envia nó mais valioso
                     n.getN().get(n.getP()).sendAck(mostValuedNode);
                     //coloca a variavel que diz se ele já enviou a true
                     n.setDeltaACK(true);
-                  
-                    state = "WAIT_LEADER";                    
+
+                    state = "WAIT_LEADER";
                     break;
-                        
+
                 case "WAIT_LEADER":
-                    
-                    msg = n.getMessage();
-                    if(msg.getTypeMsg().equals("LEADER")){
-                        
+
+                    msg = n.getMessage(state);
+                    if (msg.getTypeMsg().equals("LEADER")) {
+
                         n.setLid(Integer.parseInt(msg.getData()));
                         state = "BROADCAST_LEADER";
-                    }                   
-                    break;
-                
-                case "BROADCAST_LEADER":
-                    
-                    for (Integer id : n.getN().keySet()) {
-                    if (id != n.getP()) {
-                        n.getN().get(id).sendLeader((n.getLid()));
+                    } else if (msg.getTypeMsg().equals("ELECTION")) {
+                        state = "CHECK_ELECTION";
                     }
-                }
-                                        
-                   state = "STANDBY";
-                   System.out.println(" Lider: " + n.getLid() + " Pai " + n.getP() + " src_id " + n.getSrcId() + " src_num " + n.getSrcNum());
-                   
-                   break;
-        
+
+                    break;
+
+                case "BROADCAST_LEADER":
+
+                    for (Integer id : n.getN().keySet()) {
+                        if (id != n.getP()) {
+                            n.getN().get(id).sendLeader((n.getLid()));
+                        }
+                    }
+
+                    state = "STANDBY";
+                    System.out.println(" Lider: " + n.getLid() + " Pai " + n.getP() + " src_id " + n.getSrcId() + " src_num " + n.getSrcNum());
+
+                    break;
+
+            }
+
+            // System.out.println("State = " + state + " || Lider: " + n.getLid());
         }
-        
-        System.out.println("State = " + state + " Lider: " + n.getLid());
-        
-        }
-}
+    }
+
     /**
-     * 
+     *
      * @param srcId1
      * @param srcNum1
      * @param srcId2
      * @param srcNum2
      * @return True se 1 > 2; False senão
      */
-    private static boolean compareSrc(int srcId1, int srcNum1, int srcId2, int srcNum2){
+    private static boolean compareSrc(int srcId1, int srcNum1, int srcId2, int srcNum2) {
         return (srcNum1 > srcNum2) || ((srcNum1 == srcNum2) && (srcId1 > srcId2));
     }
-    
+
     private static void configuration(MainNode n, String path) {
         String csvFile = path;
         BufferedReader br = null;
@@ -222,7 +236,7 @@ private static void stateMachineElection(MainNode n) {
                     //public Node(int neighborId, int portDest, InetAddress nodeAddr, int mainNodeId)
                     n.addN(new Node(Integer.parseInt(info[0]),
                             Integer.parseInt(info[1]),
-                            InetAddress.getByName(info[2]), 
+                            InetAddress.getByName(info[2]),
                             n.getId()));
                 }
             }
