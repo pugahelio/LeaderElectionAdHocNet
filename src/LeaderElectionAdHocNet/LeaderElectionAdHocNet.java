@@ -48,16 +48,15 @@ public class LeaderElectionAdHocNet {
 
             switch (state) {
                 case "STANDBY":
+                    //n.resetElection(); // para estar permanentemente a fazer elections
 
-                    n.resetElection();
-
-                    if (n.getId() == 1 /*n.getLid() == -1 && !n.isDeltaElection()*/) {
+                    if(n.getLid() == -1 && !n.isDeltaElection()) {
                         state = "START_ELECTION";
                     } else {
                         msg = n.getMessage(state);
                         if (msg.getTypeMsg().equals("ELECTION")) {
                             state = "CHECK_ELECTION";
-                        } else if ((msg.getTypeMsg().equals("LEADER")) && (msg.getData().equals(n.getLid()))) {
+                        } else if ((msg.getTypeMsg().equals("LEADER")) && (!(Integer.parseInt(msg.getData()) == n.getLid()))) {
                             state = "BROADCAST_LEADER";
                         }
                     }
@@ -102,16 +101,14 @@ public class LeaderElectionAdHocNet {
                         state = "RETRANSMIT_ELECTION";
                     } else if (!(compareSrc(srcNum, srcId, n.getSrcNum(), n.getSrcId()))) {
                         state = "WAIT_ACK";
-                        System.out.println("src_num " + n.getSrcNum() + " src_id " + n.getSrcId() + " scrNum da mensagem " + srcNum + " scrId da mensagem " + srcId);
+                       // System.out.println("src_num " + n.getSrcNum() + " src_id " + n.getSrcId() + " scrNum da mensagem " + srcNum + " scrId da mensagem " + srcId);
                     }
 
                     break;
 
                 case "WAIT_ACK":
 
-                    msg = n.getMessage(state);
-                    
-                    if ((n.getS().isEmpty() && (n.getId() != n.getSrcId()))) {
+                     if ((n.getS().isEmpty() && (n.getId() != n.getSrcId()))) {
                         state = "ACK_TO_PARENT";
                         break;
                     } else if ((n.getS().isEmpty()) && (n.getId() == n.getSrcId())) {
@@ -119,7 +116,8 @@ public class LeaderElectionAdHocNet {
                         state = "BROADCAST_LEADER";
                         break;
                     }
-
+                    msg = n.getMessage(state);
+                    
                     if (msg.getTypeMsg().equals("ACK")) {
 
                         //se receber um ack retira o nó da lista
@@ -132,7 +130,7 @@ public class LeaderElectionAdHocNet {
                     } else if (msg.getTypeMsg().equals("ELECTION")) {
 
                         state = "CHECK_ELECTION";
-                    } else if ((msg.getTypeMsg().equals("LEADER")) && (msg.getData().equals(n.getLid()))) {
+                    } else if ((msg.getTypeMsg().equals("LEADER")) && (!(Integer.parseInt(msg.getData()) == n.getLid()))) {
                         state = "BROADCAST_LEADER";
                     }
 
@@ -198,7 +196,7 @@ public class LeaderElectionAdHocNet {
 
             }
 
-            // System.out.println("State = " + state + " || Lider: " + n.getLid());
+            System.out.println("State = " + state + " || Lider: " + n.getLid());
         }
     }
 
