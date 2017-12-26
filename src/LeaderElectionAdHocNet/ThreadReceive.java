@@ -45,8 +45,13 @@ public class ThreadReceive extends Thread {
 
         TimerTask task = new TimerTask() {
             public void run() {
-                secondsPassed++;
-                if (secondsPassed > 9) {
+                if(myNode.getLid() != (-1)){
+                    
+                       secondsPassed++;
+                       
+                }
+             
+                if ((secondsPassed > 9) && (myNode.getLid() != (myNode.getId())) && (myNode.getLid() != (-1))) {
                     myNode.setLid(-1);
                     myNode.setDeltaiElection(false);
 
