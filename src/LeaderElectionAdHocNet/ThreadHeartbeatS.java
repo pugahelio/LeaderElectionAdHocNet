@@ -5,9 +5,6 @@
  */
 package LeaderElectionAdHocNet;
 
-import java.util.Date;
-import java.util.Iterator;
-import java.util.Queue;
 import java.util.Timer;
 import java.util.TimerTask;
 

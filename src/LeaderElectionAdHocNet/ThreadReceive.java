@@ -7,9 +7,6 @@ package LeaderElectionAdHocNet;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.util.LinkedList;
-import java.util.Queue;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.BlockingQueue;
@@ -37,6 +34,7 @@ public class ThreadReceive extends Thread {
     ThreadReceive(MainNode n) {
 
         myNode = n;
+        myTimer = new Timer();
         queue = new LinkedBlockingQueue<>();
         secondsPassed = 0;
         lastNumMsgHeartbeat = 0;
@@ -48,7 +46,7 @@ public class ThreadReceive extends Thread {
         TimerTask task = new TimerTask() {
             public void run() {
                 secondsPassed++;
-                if (secondsPassed > 10) {
+                if (secondsPassed > 9) {
                     myNode.setLid(-1);
                     myNode.setDeltaiElection(false);
 
