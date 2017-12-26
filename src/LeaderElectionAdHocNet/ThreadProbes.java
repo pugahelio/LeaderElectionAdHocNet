@@ -72,16 +72,16 @@ public class ThreadProbes extends Thread {
                     }
                             
                     if ((myNode.getN().get(id).isTestingProbes()) && (myNode.getS().contains(id))){
-                        System.err.println("\nNodo " + myNode.getN().get(id).getId() + " removido do HB " + myNode.getN().get(id).isTestingProbes() + "\n");
+                       // System.err.println("\nNodo " + myNode.getN().get(id).getId() + " removido do HB " + myNode.getN().get(id).isTestingProbes() + "\n");
                         myNode.getS().remove(id);
                         
                     }
                     
-                    if((myNode.getN().get(id).isTestingProbes()) && (myNode.getN().get(id).getId() == myNode.getLid())){
-                        System.err.println("\n Lider dead ");
-                        myNode.resetElection();
-                    }
-                                        
+//                    if((myNode.getN().get(id).isTestingProbes()) && (myNode.getN().get(id).getId() == myNode.getLid())){
+//                        System.err.println("\n Lider dead ");
+//                        myNode.resetElection();
+//                    }
+//                                        
                 }
 
 

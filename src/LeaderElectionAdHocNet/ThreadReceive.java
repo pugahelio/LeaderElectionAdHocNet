@@ -26,6 +26,7 @@ public class ThreadReceive extends Thread {
     private int secondsPassed;
     private Timer myTimer;
     private int lastNumMsgHeartbeat;
+    private int id_hb_aux;
 
     //Comunicações
     private DatagramPacket packetIn;
@@ -38,6 +39,7 @@ public class ThreadReceive extends Thread {
         queue = new LinkedBlockingQueue<>();
         secondsPassed = 0;
         lastNumMsgHeartbeat = 0;
+        id_hb_aux = 0;
 
     }
 
@@ -45,15 +47,18 @@ public class ThreadReceive extends Thread {
 
         TimerTask task = new TimerTask() {
             public void run() {
-                if(myNode.getLid() != (-1)){
-                    
+                
+                if(myNode.getLid() != (-1) && (!myNode.isDeltaElection()) && (myNode.getId() != myNode.getLid())){
                        secondsPassed++;
+                       System.out.println("Contador " + secondsPassed);
                        
                 }
              
-                if ((secondsPassed > 9) && (myNode.getLid() != (myNode.getId())) && (myNode.getLid() != (-1))) {
+                if ((secondsPassed > 9) && (myNode.getLid() != (myNode.getId())) && (myNode.getLid() != (-1)) && (!myNode.isDeltaElection())) {
+                    System.err.println("\nLider inativo \n");
                     myNode.setLid(-1);
                     myNode.setDeltaiElection(false);
+                    secondsPassed = 0;
 
                 }
                 // System.out.println(" contador " + secondsPassed);
@@ -77,17 +82,28 @@ public class ThreadReceive extends Thread {
                 msg = new Message(trama);
             } while (msg.getDestId() != myNode.getId());
 
+            //System.out.println("Recebido: " + msg.getTrama());
             if (msg.getTypeMsg().equals("PROBE")) {
                 myNode.getN().get(msg.getSenderId()).sendReply();
             } else if (msg.getTypeMsg().equals("REPLY")) {
                 myNode.getN().get(msg.getSenderId()).setTestingProbes(false);
                 myNode.getN().get(msg.getSenderId()).setAlive(true);
             } else if (msg.getTypeMsg().equals("HEARTBEAT")) {
-                if (Integer.parseInt(msg.getData()) == myNode.getLid()) {
+                    int init = 0;
+                    int end = msg.getData().indexOf(",");
+                    int lider_hb = Integer.parseInt(msg.getData().substring(init, end));
+
+                    init = end + 1;
+                    end = msg.getData().length();
+                    int id_hb = Integer.parseInt(msg.getData().substring(init, end));
+
+                
+                if (lider_hb == myNode.getLid()) {
                     secondsPassed = 0;
-                    if ((lastNumMsgHeartbeat != msg.getIdMsg() && (myNode.getId() != Integer.parseInt(msg.getData())))) {
+                    if (id_hb_aux != id_hb) {
+                        id_hb_aux = id_hb;
                         for (Integer id : myNode.getN().keySet()) {
-                            myNode.getN().get(id).sendHeartbeat(Integer.parseInt(msg.getData()));
+                            myNode.getN().get(id).sendHeartbeat(lider_hb,id_hb);
 
                         }
                     }

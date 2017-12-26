@@ -19,6 +19,7 @@ public class ThreadHeartbeatS extends Thread {
     private int secondsPassed;
     private volatile boolean flagWait;
     private String state;
+    private int id_hb;
 
     ThreadHeartbeatS(MainNode n) {
 
@@ -27,6 +28,7 @@ public class ThreadHeartbeatS extends Thread {
         secondsPassed = 0;
         flagWait = false;
         state = "SendHeartbeat";
+        id_hb = 0;
 
     }
 
@@ -51,9 +53,11 @@ public class ThreadHeartbeatS extends Thread {
              
                 if ((flagWait == false) && (state.equals("SendHeartbeat"))) {
 
+                    id_hb ++;
+                    
                     //  envia heartbeat a todos os vizinhos
                     for (Integer id : myNode.getN().keySet()) {
-                        myNode.getN().get(id).sendHeartbeat(myNode.getId());
+                        myNode.getN().get(id).sendHeartbeat(myNode.getId(), id_hb);
 
                     }
                     secondsPassed = 0;

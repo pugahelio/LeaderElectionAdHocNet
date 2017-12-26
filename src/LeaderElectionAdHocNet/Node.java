@@ -122,8 +122,8 @@ public class Node {
         System.err.println("Enviado " + msg.getTrama());
     }
     
-    public void sendHeartbeat(int value) {
-        Message msg = new Message(msgId, mainNodeId, id, "HEARTBEAT", Integer.toString(value));
+    public void sendHeartbeat(int value, int id_hb) {
+        Message msg = new Message(msgId, mainNodeId, id, "HEARTBEAT", Integer.toString(value) + "," + id_hb);
 
         bufOut = msg.getTrama().getBytes();
         packetOut = new DatagramPacket(bufOut, bufOut.length, nodeAddress, nodePort);

@@ -55,6 +55,7 @@ public class LeaderElectionAdHocNet {
                     mostValuedNode = n.getId(); 
                     srcNumElect = 0; // reset do src num da eleiçao
                     srcIdElect = 0; // reset do src id da eleiçao
+                    n.setDeltaiElection(false);
                     
                     if(n.getLid() == -1 && !n.isDeltaElection()) {
                         state = "START_ELECTION";
@@ -70,6 +71,7 @@ public class LeaderElectionAdHocNet {
                     break;
 
                 case "START_ELECTION":
+                    n.resetElection();
                     //esta em eleiçao
                     n.setDeltaiElection(true);
                     //imcrementa o src

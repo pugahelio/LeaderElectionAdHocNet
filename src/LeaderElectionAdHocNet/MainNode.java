@@ -24,7 +24,7 @@ public class MainNode {
 
     //Leader election varibles
     volatile private int id;
-    private boolean deltaElection; // 1-> esta em election 0 -> nao esta em election ou seja em principio terá lider a menos que seja a primeira vez aka tem -1 no lider
+    volatile private boolean deltaElection; // 1-> esta em election 0 -> nao esta em election ou seja em principio terá lider a menos que seja a primeira vez aka tem -1 no lider
     private int pId;
     private boolean deltaACK; // 0-> ainda nao enviou ACK para o pai ; 1 -> ja enviou ACK para o pai
     volatile private int lidId;
