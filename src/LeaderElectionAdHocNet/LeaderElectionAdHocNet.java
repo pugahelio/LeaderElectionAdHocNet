@@ -6,12 +6,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.net.InetAddress;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 
 // Falta verificar no heartbeat se quem morreu é o lider
@@ -29,8 +24,9 @@ public class LeaderElectionAdHocNet {
 
         TimeUnit.SECONDS.sleep(1);
 
-        myNode.threadHbS.start();
+        myNode.threadProbes.start();
 
+        myNode.threadHeartbeat.start();
 //        Message msg;
 //        while (true) {
 //
@@ -45,15 +41,21 @@ public class LeaderElectionAdHocNet {
         String state = "STANDBY";
         Message msg = new Message("null|null|null|null|null");
         int mostValuedNode = n.getId();
-        int srcNum = 0;
-        int srcId = 0;
+        int srcNumElect = 0;
+        int srcIdElect = 0;
+        int srcNumAux = 0;
+        int srcIdAux = 0;
+        
         while (true) {
             TimeUnit.SECONDS.sleep(1);
 
             switch (state) {
                 case "STANDBY":
                     //n.resetElection(); // para estar permanentemente a fazer elections
-
+                    mostValuedNode = n.getId(); 
+                    srcNumElect = 0; // reset do src num da eleiçao
+                    srcIdElect = 0; // reset do src id da eleiçao
+                    
                     if(n.getLid() == -1 && !n.isDeltaElection()) {
                         state = "START_ELECTION";
                     } else {
@@ -61,6 +63,7 @@ public class LeaderElectionAdHocNet {
                         if (msg.getTypeMsg().equals("ELECTION")) {
                             state = "CHECK_ELECTION";
                         } else if ((msg.getTypeMsg().equals("LEADER")) && (!(Integer.parseInt(msg.getData()) == n.getLid()))) {
+                            n.setLid(Integer.parseInt(msg.getData()));
                             state = "BROADCAST_LEADER";
                         }
                     }
@@ -71,10 +74,12 @@ public class LeaderElectionAdHocNet {
                     n.setDeltaiElection(true);
                     //imcrementa o src
                     n.setSrc(n.getSrcNum() + 1, n.getId());
+                    srcNumElect = n.getSrcNum();
+                    srcIdElect = n.getId();
                     //envia election a todos os vizinhos
-
+                    System.out.println("srcIdElect " + srcIdElect + " n.getId() "+ n.getId());
                     for (Integer id : n.getN().keySet()) {
-                        n.getN().get(id).sendElection(n.getSrcId(), n.getSrcNum());
+                        n.getN().get(id).sendElection(srcNumElect, srcIdElect);
                         if (n.getN().get(id).isAlive()) {
                             System.err.println("Adicionei " + id);
                             n.addS(id);
@@ -89,33 +94,34 @@ public class LeaderElectionAdHocNet {
 
                     int init = 0;
                     int end = msg.getData().indexOf(",");
-                    srcNum = Integer.parseInt(msg.getData().substring(init, end));
+                    srcNumAux = Integer.parseInt(msg.getData().substring(init, end));
 
                     init = end + 1;
                     end = msg.getData().length();
-                    srcId = Integer.parseInt(msg.getData().substring(init, end));
+                    srcIdAux = Integer.parseInt(msg.getData().substring(init, end));
 
+                    System.err.println("scrIdAux " + srcIdAux + " scrNumAUx " + srcNumAux + " scrIdElect " + srcIdElect + " scrNumElect " + srcNumElect);
                     //Se tiver src igual estou a falar do mesmo logo responde instataneamente.
-                    if (srcNum == n.getSrcNum() && srcId == n.getSrcId()) {
+                    if (srcNumAux == srcNumElect && srcIdAux == srcIdElect) {
                         n.getN().get(msg.getSenderId()).sendAck(mostValuedNode);
                         state = "WAIT_ACK";
 
                         // Uma eleição com src superior
-                    } else if (compareSrc(srcNum, srcId, n.getSrcNum(), n.getSrcId())) {
+                    } else if (compareSrc(srcNumAux, srcIdAux, srcNumElect, srcIdElect)) {
                         state = "RETRANSMIT_ELECTION";
-                    } else if (!(compareSrc(srcNum, srcId, n.getSrcNum(), n.getSrcId()))) {
+                    } else if (!(compareSrc(srcNumAux, srcIdAux, srcNumElect, srcIdElect))) {
                         state = "WAIT_ACK";
-                       // System.out.println("src_num " + n.getSrcNum() + " src_id " + n.getSrcId() + " scrNum da mensagem " + srcNum + " scrId da mensagem " + srcId);
+                       
                     }
 
                     break;
 
                 case "WAIT_ACK":
 
-                     if ((n.getS().isEmpty() && (n.getId() != n.getSrcId()))) {
+                     if ((n.getS().isEmpty() && (n.getId() != srcIdElect))) {
                         state = "ACK_TO_PARENT";
                         break;
-                    } else if ((n.getS().isEmpty()) && (n.getId() == n.getSrcId())) {
+                    } else if ((n.getS().isEmpty()) && (n.getId() == srcIdElect)) {
                         n.setLid(mostValuedNode);
                         state = "BROADCAST_LEADER";
                         break;
@@ -135,6 +141,7 @@ public class LeaderElectionAdHocNet {
 
                         state = "CHECK_ELECTION";
                     } else if ((msg.getTypeMsg().equals("LEADER")) && (!(Integer.parseInt(msg.getData()) == n.getLid()))) {
+                        n.setLid(Integer.parseInt(msg.getData()));
                         state = "BROADCAST_LEADER";
                     }
 
@@ -148,11 +155,13 @@ public class LeaderElectionAdHocNet {
                     //actualiza o pai
                     n.setP(msg.getSenderId());
                     //actualiza src
-                    n.setSrc(srcNum, srcId);
+                    srcNumElect = srcNumAux;
+                    srcIdElect = srcIdAux;
+                    
                     //envia election a todos os vizinos menos o pai e adiciona a lista de espera de ack
                     for (Integer id : n.getN().keySet()) {
                         if (id != n.getP()) {
-                            n.getN().get(id).sendElection(n.getSrcId(), n.getSrcNum());
+                            n.getN().get(id).sendElection(srcNumElect, srcIdElect);
                             if (n.getN().get(id).isAlive()) {
                                 System.err.println("Adicionei " + id);
                                 n.addS(id);
@@ -186,7 +195,7 @@ public class LeaderElectionAdHocNet {
                     break;
 
                 case "BROADCAST_LEADER":
-
+                    
                     for (Integer id : n.getN().keySet()) {
                         if (id != n.getP()) {
                             n.getN().get(id).sendLeader((n.getLid()));
@@ -194,7 +203,7 @@ public class LeaderElectionAdHocNet {
                     }
 
                     state = "STANDBY";
-                    System.out.println(" Lider: " + n.getLid() + " Pai " + n.getP() + " src_id " + n.getSrcId() + " src_num " + n.getSrcNum());
+                    System.out.println(" Lider: " + n.getLid() + " Pai " + n.getP() +  " src_num " + srcNumElect + " src_id " + srcIdElect);
 
                     break;
 

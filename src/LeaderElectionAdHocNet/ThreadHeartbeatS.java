@@ -6,21 +6,21 @@
 package LeaderElectionAdHocNet;
 
 import java.util.Date;
+import java.util.Iterator;
 import java.util.Queue;
 import java.util.Timer;
 import java.util.TimerTask;
 
 /**
  *
- * @author PedroRodrigues
+ * @author pedrorodrigues
  */
 public class ThreadHeartbeatS extends Thread {
 
     private MainNode myNode;
-    public Queue<Message> queue;
     private Timer myTimer;
     private int secondsPassed;
-    private  volatile boolean flagWait;
+    private volatile boolean flagWait;
     private String state;
 
     ThreadHeartbeatS(MainNode n) {
@@ -29,7 +29,7 @@ public class ThreadHeartbeatS extends Thread {
         myTimer = new Timer();
         secondsPassed = 0;
         flagWait = false;
-        state = "SendProbes";
+        state = "SendHeartbeat";
 
     }
 
@@ -38,49 +38,38 @@ public class ThreadHeartbeatS extends Thread {
         TimerTask task = new TimerTask() {
             public void run() {
                 secondsPassed++;
-                if ((secondsPassed == 2) && (flagWait == true)) {
+                if ((secondsPassed == 3) && (flagWait == true)) {
                     flagWait = false;
-                    
+
                 }
-               // System.out.println(" contador " + secondsPassed);
+                // System.out.println(" contador " + secondsPassed);
             }
         };
         myTimer.schedule(task, 0, 1000);
 
         while (true) {
 
-            if ((flagWait == false) && (state.equals("SendProbes"))) {
+           // System.err.println("meu id " + myNode.getId() + " meu lider " + myNode.getLid() + " lel " + (myNode.getId() == myNode.getLid()));
+            if (myNode.getId() == myNode.getLid()) {
+             
+                if ((flagWait == false) && (state.equals("SendHeartbeat"))) {
 
-                System.err.println("\nVolta\n");
-                //  envia probes a todos os vizinhos
-                for (Integer id : myNode.getN().keySet()) {
-                    myNode.getN().get(id).setHB(true);
-                    myNode.getN().get(id).sendProbe();
-                    
-                }
-                System.out.println("\n Comecar a contar \n");
-                secondsPassed = 0;
-                flagWait = true;
-                state = "WaitReplies";
-                
-            }
-            else if ((flagWait == false) && (state.equals("WaitReplies"))) {
+                    //  envia heartbeat a todos os vizinhos
+                    for (Integer id : myNode.getN().keySet()) {
+                        myNode.getN().get(id).sendHeartbeat(myNode.getId());
 
-                System.out.println("\nFim da volta\n");
-                for (Integer id : myNode.getN().keySet()) {
-                    if (myNode.getN().get(id).getHB() == true) {
-                        System.err.println("\nNodo " + myNode.getN().get(id).getId() + " removido - HB " + myNode.getN().get(id).getHB());
-                        myNode.removeN(myNode.getN().get(id));
-                       
                     }
+                    secondsPassed = 0;
+                    flagWait = true;
+                    state = "Wait";
+
+                } else if ((flagWait == false) && (state.equals("Wait"))) {
+
+                    flagWait = true;
+                    secondsPassed = 0;
+                    state = "SendHeartbeat";
                 }
-                
-                flagWait = true;
-                secondsPassed = 0;
-                state = "SendProbes";
             }
-//System.out.println(" flagwait - "+ flagWait + " state - " + state);
-          
         }
     }
 }

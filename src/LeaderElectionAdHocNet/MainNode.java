@@ -23,24 +23,27 @@ import java.util.logging.Logger;
 public class MainNode {
 
     //Leader election varibles
-    private int id;
-    private boolean deltaElection;
+    volatile private int id;
+    private boolean deltaElection; // 1-> esta em election 0 -> nao esta em election ou seja em principio terá lider a menos que seja a primeira vez aka tem -1 no lider
     private int pId;
-    private boolean deltaACK;
-    private int lidId;
-    private Map<Integer, Node> n;
-    private Set<Integer> s;
+    private boolean deltaACK; // 0-> ainda nao enviou ACK para o pai ; 1 -> ja enviou ACK para o pai
+    volatile private int lidId;
+    private Map<Integer, Node> n; // mapa que contem toda a vizinhança do main node
+    private Set<Integer> s; // Set of nodes that the main node is waiting for ACKs
     private int srcNum;
     private int srcId;
-
-    //Comunicações
+    
     private int nodePort;
-    private DatagramSocket socket;
-    private DatagramPacket packetIn;
-    private byte[] bufIn = new byte[2048];
+    public DatagramSocket socket;
 
+
+    ThreadReceive threadR;
+    ThreadProbes threadProbes;
+    ThreadHeartbeatS threadHeartbeat;
+    
+    
     public MainNode() {
-        deltaElection = false;
+        deltaElection = false; 
         pId = -1;
         deltaACK = false;
         lidId = -1;
@@ -50,6 +53,12 @@ public class MainNode {
         srcNum = 0;
         srcId = this.id;
         this.nodePort = -1;
+        
+        // Criar a thread para receber as msg
+        
+        threadR = new ThreadReceive(this);
+        threadProbes = new ThreadProbes(this);
+        threadHeartbeat = new ThreadHeartbeatS(this);
     }
 
     public void resetElection(){
@@ -58,23 +67,6 @@ public class MainNode {
         deltaACK = false;
         lidId = -1;
         s.removeAll(s);
-    }
-    
-    public Message getMessage() {
-        packetIn = new DatagramPacket(bufIn, bufIn.length);
-        Message msg;
-        String trama;
-        do {
-            try {
-                socket.receive(packetIn);
-            } catch (IOException ex) {
-                Logger.getLogger(Node.class.getName()).log(Level.SEVERE, null, ex);
-            }
-            trama = new String(packetIn.getData(), 0, packetIn.getLength());
-            msg = new Message(trama);
-        } while (msg.getDestId() != id);
-        System.err.println("Recebido: " + msg.getTrama());
-        return msg;
     }
 
     public void setNodePort(int nodePort) {
@@ -93,9 +85,8 @@ public class MainNode {
         this.deltaElection = deltaiElection;
     }
 
-    /**
-     * parent node
-     */
+
+
     public void setP(int pId) {
         this.pId = pId;
     }
@@ -121,6 +112,7 @@ public class MainNode {
         this.n.put(n.getId(), n);
     }
 
+    
     /**
      * set de nós que falta ouvir ACK
      */
@@ -128,6 +120,7 @@ public class MainNode {
         this.s.add(s);
     }
 
+    
     public void setSrc(int srcNum, int srcId) {
         this.srcNum = srcNum;
         this.srcId = srcId;
@@ -140,6 +133,28 @@ public class MainNode {
     public int getId() {
         return id;
     }
+    
+    public Message getMessage(String state){
+
+        Message msg;
+
+        while (true) {
+            while (this.threadR.queue.peek() == null){
+                
+                if((this.getS().isEmpty()) && (state.equals("WAIT_ACK") )){
+                    return new Message("null|null|null|null|null");
+                }
+                if(!this.deltaElection && this.getLid() == -1 && state.equals("STANDBY")){
+                    return new Message("null|null|null|null|null");
+                }
+            }
+            msg = this.threadR.queue.poll();
+            System.out.println("Recebido: " + msg.getTrama());
+
+                return msg;
+            }
+        }
+    
 
     public boolean isDeltaElection() {
         return deltaElection;

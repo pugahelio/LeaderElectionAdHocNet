@@ -13,8 +13,8 @@ import java.net.SocketException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-
 public class Node {
+
     private int mainNodeId;
     private InetAddress nodeAddress;
     private int nodePort;
@@ -23,9 +23,13 @@ public class Node {
     private byte[] bufOut = new byte[2048];
     private DatagramPacket packetOut;
     private int msgId;
+    public boolean testingProbes;
+    public boolean alive;
 
     public Node(int neighborId, int portDest, InetAddress nodeAddr, int mainNodeId) {
         msgId = 0;
+        testingProbes = false;
+        alive = false;
         id = neighborId;
         this.mainNodeId = mainNodeId;
         nodePort = portDest;
@@ -37,12 +41,28 @@ public class Node {
         }
     }
 
+    public void setAlive(boolean alive) {
+        this.alive = alive;
+    }
+
+    public boolean isAlive() {
+        return alive;
+    }
+
     public int getId() {
         return id;
     }
 
+    public void setTestingProbes(boolean value) {
+        testingProbes = value;
+    }
+
+    public boolean isTestingProbes() {
+        return testingProbes;
+    }
+
     public void sendElection(int srcNum, int srcId) {
-        Message msg = new Message(msgId, mainNodeId, id, "ELECTION", Integer.toString(srcId) + "," + Integer.toString(srcNum));
+        Message msg = new Message(msgId, mainNodeId, id, "ELECTION", Integer.toString(srcNum) + "," + Integer.toString(srcId) );
 
         bufOut = msg.getTrama().getBytes();
 
@@ -54,7 +74,7 @@ public class Node {
             Logger.getLogger(Node.class.getName()).log(Level.SEVERE, null, ex);
         }
         msgId++;
-        System.err.println("Porta de destino: " + nodePort + ", IP destino: " + nodeAddress.getHostAddress() + " " + msg.getTrama());
+        System.err.println("Enviado " + msg.getTrama());
 
     }
 
@@ -70,8 +90,7 @@ public class Node {
             Logger.getLogger(Communication.class.getName()).log(Level.SEVERE, null, ex);
         }
         msgId++;
-        System.err.println("Porta de destino: " + nodePort + ", IP destino: " + nodeAddress.getHostAddress() + " " + msg.getTrama());
-
+        System.err.println("Enviado " + msg.getTrama());
     }
 
     public void sendLeader(int leaderID) {
@@ -86,8 +105,7 @@ public class Node {
             Logger.getLogger(Communication.class.getName()).log(Level.SEVERE, null, ex);
         }
         msgId++;
-        System.err.println("Porta de destino: " + nodePort + ", IP destino: " + nodeAddress.getHostAddress() + " " + msg.getTrama());
-
+        System.err.println("Enviado " + msg.getTrama());
     }
 
     public void sendProbe() {
@@ -101,8 +119,21 @@ public class Node {
             Logger.getLogger(Communication.class.getName()).log(Level.SEVERE, null, ex);
         }
         msgId++;
-        System.err.println("Porta de destino: " + nodePort + ", IP destino: " + nodeAddress.getHostAddress() + " " + msg.getTrama());
+        System.err.println("Enviado " + msg.getTrama());
+    }
+    
+    public void sendHeartbeat(int value) {
+        Message msg = new Message(msgId, mainNodeId, id, "HEARTBEAT", Integer.toString(value));
 
+        bufOut = msg.getTrama().getBytes();
+        packetOut = new DatagramPacket(bufOut, bufOut.length, nodeAddress, nodePort);
+        try {
+            socketOut.send(packetOut);
+        } catch (IOException ex) {
+            Logger.getLogger(Communication.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        msgId++;
+        System.err.println("Enviado " + msg.getTrama());
     }
 
     public void sendReply() {
@@ -116,7 +147,6 @@ public class Node {
             Logger.getLogger(Communication.class.getName()).log(Level.SEVERE, null, ex);
         }
         msgId++;
-        System.err.println("Porta de destino: " + nodePort + ", IP destino: " + nodeAddress.getHostAddress() + " " + msg.getTrama());
-
+        System.err.println("Enviado " + msg.getTrama());
     }
 }
