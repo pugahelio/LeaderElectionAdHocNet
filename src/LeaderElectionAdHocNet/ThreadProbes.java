@@ -5,9 +5,6 @@
  */
 package LeaderElectionAdHocNet;
 
-import java.util.Date;
-import java.util.Iterator;
-import java.util.Queue;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -18,7 +15,6 @@ import java.util.TimerTask;
 public class ThreadProbes extends Thread {
 
     private MainNode myNode;
-    public Queue<Message> queue;
     private Timer myTimer;
     private int secondsPassed;
     private volatile boolean flagWait;
@@ -39,11 +35,9 @@ public class ThreadProbes extends Thread {
         TimerTask task = new TimerTask() {
             public void run() {
                 secondsPassed++;
-                if ((secondsPassed == 10) && (flagWait == true)) {
+                if ((secondsPassed == 1) && (flagWait == true)) {
                     flagWait = false;
-
                 }
-                // System.out.println(" contador " + secondsPassed);
             }
         };
         myTimer.schedule(task, 0, 1000);
@@ -53,7 +47,7 @@ public class ThreadProbes extends Thread {
             if ((flagWait == false) && (state.equals("SendProbes"))) {
 
                 //  envia probes a todos os vizinhos
-                for (Integer id : myNode.getN().keySet()) {
+                for (Integer id : myNode.getS()) {
                     myNode.getN().get(id).setTestingProbes(true);
                     myNode.getN().get(id).sendProbe();
 
@@ -65,32 +59,19 @@ public class ThreadProbes extends Thread {
             } else if ((flagWait == false) && (state.equals("WaitReplies"))) {
 
                 for (Integer id : myNode.getN().keySet()) {
-                    
-                    if((myNode.getN().get(id).isTestingProbes())){
+
+                    if ((myNode.getN().get(id).isTestingProbes())) {
                         myNode.getN().get(id).setAlive(false);
-                        System.err.println("\n Nodo não operacional "+myNode.getN().get(id).getId() );
+                        System.err.println("\n Nó não operacional: " + myNode.getN().get(id).getId());
                     }
-                            
-                    if ((myNode.getN().get(id).isTestingProbes()) && (myNode.getS().contains(id))){
-                       // System.err.println("\nNodo " + myNode.getN().get(id).getId() + " removido do HB " + myNode.getN().get(id).isTestingProbes() + "\n");
+
+                    if ((myNode.getN().get(id).isTestingProbes()) && (myNode.getS().contains(id))) {
                         myNode.getS().remove(id);
-                        
+
                     }
-                    
-//                    if((myNode.getN().get(id).isTestingProbes()) && (myNode.getN().get(id).getId() == myNode.getLid())){
-//                        System.err.println("\n Lider dead ");
-//                        myNode.resetElection();
-//                    }
-//                                        
                 }
-
-
-                flagWait = true;
-                secondsPassed = 0;
                 state = "SendProbes";
             }
         }
-//System.out.println(" flagwait - "+ flagWait + " state - " + state);
-
     }
 }

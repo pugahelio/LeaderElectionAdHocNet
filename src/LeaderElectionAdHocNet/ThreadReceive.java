@@ -25,8 +25,9 @@ public class ThreadReceive extends Thread {
 
     private int secondsPassed;
     private Timer myTimer;
+    
     private int lastNumMsgHeartbeat;
-    private int id_hb_aux;
+    private int idHbAux;
 
     //Comunicações
     private DatagramPacket packetIn;
@@ -39,7 +40,7 @@ public class ThreadReceive extends Thread {
         queue = new LinkedBlockingQueue<>();
         secondsPassed = 0;
         lastNumMsgHeartbeat = 0;
-        id_hb_aux = 0;
+        idHbAux = 0;
 
     }
 
@@ -61,7 +62,6 @@ public class ThreadReceive extends Thread {
                     secondsPassed = 0;
 
                 }
-                // System.out.println(" contador " + secondsPassed);
             }
         };
         myTimer.schedule(task, 0, 1000);
@@ -80,7 +80,7 @@ public class ThreadReceive extends Thread {
                 }
                 trama = new String(packetIn.getData(), 0, packetIn.getLength());
                 msg = new Message(trama);
-            } while (msg.getDestId() != myNode.getId());
+            } while ((msg.getDestId() != myNode.getId()) || (myNode.getN().get(msg.getSenderId()).isBlackListed()));
 
             //System.out.println("Recebido: " + msg.getTrama());
             if (msg.getTypeMsg().equals("PROBE")) {
@@ -91,19 +91,19 @@ public class ThreadReceive extends Thread {
             } else if (msg.getTypeMsg().equals("HEARTBEAT")) {
                     int init = 0;
                     int end = msg.getData().indexOf(",");
-                    int lider_hb = Integer.parseInt(msg.getData().substring(init, end));
+                    int liderHb = Integer.parseInt(msg.getData().substring(init, end));
 
                     init = end + 1;
                     end = msg.getData().length();
-                    int id_hb = Integer.parseInt(msg.getData().substring(init, end));
+                    int idHb = Integer.parseInt(msg.getData().substring(init, end));
 
                 
-                if (lider_hb == myNode.getLid()) {
+                if (liderHb == myNode.getLid()) {
                     secondsPassed = 0;
-                    if (id_hb_aux != id_hb) {
-                        id_hb_aux = id_hb;
+                    if (idHbAux != idHb) {
+                        idHbAux = idHb;
                         for (Integer id : myNode.getN().keySet()) {
-                            myNode.getN().get(id).sendHeartbeat(lider_hb,id_hb);
+                            myNode.getN().get(id).sendHeartbeat(liderHb,idHb);
 
                         }
                     }

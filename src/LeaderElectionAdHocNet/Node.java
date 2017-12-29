@@ -25,15 +25,19 @@ public class Node {
     private int msgId;
     public boolean testingProbes;
     public boolean alive;
+    
+    private boolean blackListed;
 
     public Node(int neighborId, int portDest, InetAddress nodeAddr, int mainNodeId) {
         msgId = 0;
         testingProbes = false;
-        alive = false;
+        alive = true;
         id = neighborId;
         this.mainNodeId = mainNodeId;
         nodePort = portDest;
         nodeAddress = nodeAddr;
+        blackListed = false;
+        
         try {
             socketOut = new DatagramSocket();
         } catch (SocketException ex) {
@@ -41,6 +45,14 @@ public class Node {
         }
     }
 
+    public boolean isBlackListed() {
+        return blackListed;
+    }
+
+    public void setBlackListed(boolean blackListed) {
+        this.blackListed = blackListed;
+    }
+    
     public void setAlive(boolean alive) {
         this.alive = alive;
     }
@@ -62,91 +74,103 @@ public class Node {
     }
 
     public void sendElection(int srcNum, int srcId) {
-        Message msg = new Message(msgId, mainNodeId, id, "ELECTION", Integer.toString(srcNum) + "," + Integer.toString(srcId) );
-
-        bufOut = msg.getTrama().getBytes();
-
-        packetOut = new DatagramPacket(bufOut, bufOut.length, nodeAddress, nodePort);
-
-        try {
-            socketOut.send(packetOut);
-        } catch (IOException ex) {
-            Logger.getLogger(Node.class.getName()).log(Level.SEVERE, null, ex);
+        if (!blackListed) {
+            
+            Message msg = new Message(msgId, mainNodeId, id, "ELECTION", Integer.toString(srcNum) + "," + Integer.toString(srcId));
+            
+            bufOut = msg.getTrama().getBytes();
+            
+            packetOut = new DatagramPacket(bufOut, bufOut.length, nodeAddress, nodePort);
+            
+            try {
+                socketOut.send(packetOut);
+            } catch (IOException ex) {
+                Logger.getLogger(Node.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            msgId++;
+            System.err.println("Enviado " + msg.getTrama());
         }
-        msgId++;
-        System.err.println("Enviado " + msg.getTrama());
-
     }
 
     public void sendAck(int mostValueNode) {
-        Message msg = new Message(msgId, mainNodeId, id, "ACK", Integer.toString(mostValueNode));
-
-        bufOut = msg.getTrama().getBytes();
-
-        packetOut = new DatagramPacket(bufOut, bufOut.length, nodeAddress, nodePort);
-        try {
-            socketOut.send(packetOut);
-        } catch (IOException ex) {
-            Logger.getLogger(Communication.class.getName()).log(Level.SEVERE, null, ex);
+        if (!blackListed) {
+            Message msg = new Message(msgId, mainNodeId, id, "ACK", Integer.toString(mostValueNode));
+            
+            bufOut = msg.getTrama().getBytes();
+            
+            packetOut = new DatagramPacket(bufOut, bufOut.length, nodeAddress, nodePort);
+            try {
+                socketOut.send(packetOut);
+            } catch (IOException ex) {
+                Logger.getLogger(Node.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            msgId++;
+            System.err.println("Enviado " + msg.getTrama());
         }
-        msgId++;
-        System.err.println("Enviado " + msg.getTrama());
     }
 
     public void sendLeader(int leaderID) {
-        Message msg = new Message(msgId, mainNodeId, id, "LEADER", Integer.toString(leaderID));
-
-        bufOut = msg.getTrama().getBytes();
-
-        packetOut = new DatagramPacket(bufOut, bufOut.length, nodeAddress, nodePort);
-        try {
-            socketOut.send(packetOut);
-        } catch (IOException ex) {
-            Logger.getLogger(Communication.class.getName()).log(Level.SEVERE, null, ex);
+        if (!blackListed) {
+            Message msg = new Message(msgId, mainNodeId, id, "LEADER", Integer.toString(leaderID));
+            
+            bufOut = msg.getTrama().getBytes();
+            
+            packetOut = new DatagramPacket(bufOut, bufOut.length, nodeAddress, nodePort);
+            try {
+                socketOut.send(packetOut);
+            } catch (IOException ex) {
+                Logger.getLogger(Node.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            msgId++;
+            System.err.println("Enviado " + msg.getTrama());
         }
-        msgId++;
-        System.err.println("Enviado " + msg.getTrama());
     }
 
     public void sendProbe() {
-        Message msg = new Message(msgId, mainNodeId, id, "PROBE", null);
-
-        bufOut = msg.getTrama().getBytes();
-        packetOut = new DatagramPacket(bufOut, bufOut.length, nodeAddress, nodePort);
-        try {
-            socketOut.send(packetOut);
-        } catch (IOException ex) {
-            Logger.getLogger(Communication.class.getName()).log(Level.SEVERE, null, ex);
+        if (!blackListed) {
+            Message msg = new Message(msgId, mainNodeId, id, "PROBE", null);
+            
+            bufOut = msg.getTrama().getBytes();
+            packetOut = new DatagramPacket(bufOut, bufOut.length, nodeAddress, nodePort);
+            try {
+                socketOut.send(packetOut);
+            } catch (IOException ex) {
+                Logger.getLogger(Node.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            msgId++;
+            System.err.println("Enviado " + msg.getTrama());
         }
-        msgId++;
-        System.err.println("Enviado " + msg.getTrama());
     }
     
     public void sendHeartbeat(int value, int id_hb) {
-        Message msg = new Message(msgId, mainNodeId, id, "HEARTBEAT", Integer.toString(value) + "," + id_hb);
-
-        bufOut = msg.getTrama().getBytes();
-        packetOut = new DatagramPacket(bufOut, bufOut.length, nodeAddress, nodePort);
-        try {
-            socketOut.send(packetOut);
-        } catch (IOException ex) {
-            Logger.getLogger(Communication.class.getName()).log(Level.SEVERE, null, ex);
+        if (!blackListed) {
+            Message msg = new Message(msgId, mainNodeId, id, "HEARTBEAT", Integer.toString(value) + "," + id_hb);
+            
+            bufOut = msg.getTrama().getBytes();
+            packetOut = new DatagramPacket(bufOut, bufOut.length, nodeAddress, nodePort);
+            try {
+                socketOut.send(packetOut);
+            } catch (IOException ex) {
+                Logger.getLogger(Node.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            msgId++;
+            System.err.println("Enviado " + msg.getTrama());
         }
-        msgId++;
-        System.err.println("Enviado " + msg.getTrama());
     }
 
     public void sendReply() {
-        Message msg = new Message(msgId, mainNodeId, id, "REPLY", null);
-
-        bufOut = msg.getTrama().getBytes();
-        packetOut = new DatagramPacket(bufOut, bufOut.length, nodeAddress, nodePort);
-        try {
-            socketOut.send(packetOut);
-        } catch (IOException ex) {
-            Logger.getLogger(Communication.class.getName()).log(Level.SEVERE, null, ex);
+        if (!blackListed) {
+            Message msg = new Message(msgId, mainNodeId, id, "REPLY", null);
+            
+            bufOut = msg.getTrama().getBytes();
+            packetOut = new DatagramPacket(bufOut, bufOut.length, nodeAddress, nodePort);
+            try {
+                socketOut.send(packetOut);
+            } catch (IOException ex) {
+                Logger.getLogger(Node.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            msgId++;
+            System.err.println("Enviado " + msg.getTrama());
         }
-        msgId++;
-        System.err.println("Enviado " + msg.getTrama());
     }
 }

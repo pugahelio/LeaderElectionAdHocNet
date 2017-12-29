@@ -32,18 +32,16 @@ public class MainNode {
     private Set<Integer> s; // Set of nodes that the main node is waiting for ACKs
     private int srcNum;
     private int srcId;
-    
+
     private int nodePort;
     public DatagramSocket socket;
-
 
     ThreadReceive threadR;
     ThreadProbes threadProbes;
     ThreadHeartbeatS threadHeartbeat;
-    
-    
+
     public MainNode() {
-        deltaElection = false; 
+        deltaElection = false;
         pId = -1;
         deltaACK = false;
         lidId = -1;
@@ -53,15 +51,14 @@ public class MainNode {
         srcNum = 0;
         srcId = this.id;
         this.nodePort = -1;
-        
+
         // Criar a thread para receber as msg
-        
         threadR = new ThreadReceive(this);
         threadProbes = new ThreadProbes(this);
         threadHeartbeat = new ThreadHeartbeatS(this);
     }
 
-    public void resetElection(){
+    public void resetElection() {
         deltaElection = false;
         pId = -1;
         deltaACK = false;
@@ -79,13 +76,11 @@ public class MainNode {
     }
 
     /**
-    *1- se esta numa eleiçao, 0 senão
-    */
+     * 1- se esta numa eleiçao, 0 senão
+     */
     public void setDeltaiElection(boolean deltaiElection) {
         this.deltaElection = deltaiElection;
     }
-
-
 
     public void setP(int pId) {
         this.pId = pId;
@@ -112,7 +107,6 @@ public class MainNode {
         this.n.put(n.getId(), n);
     }
 
-    
     /**
      * set de nós que falta ouvir ACK
      */
@@ -120,7 +114,6 @@ public class MainNode {
         this.s.add(s);
     }
 
-    
     public void setSrc(int srcNum, int srcId) {
         this.srcNum = srcNum;
         this.srcId = srcId;
@@ -133,28 +126,19 @@ public class MainNode {
     public int getId() {
         return id;
     }
-    
-    public Message getMessage(String state){
+
+    public Message getMessage(String state) {
 
         Message msg;
-
-        while (true) {
-            while (this.threadR.queue.peek() == null){
-                
-                if((this.getS().isEmpty()) && (state.equals("WAIT_ACK") )){
-                    return new Message("null|null|null|null|null");
-                }
-                if(!this.deltaElection && this.getLid() == -1 && state.equals("STANDBY")){
-                    return new Message("null|null|null|null|null");
-                }
-            }
+        if (this.threadR.queue.peek() != null) {
             msg = this.threadR.queue.poll();
             System.out.println("Recebido: " + msg.getTrama());
 
-                return msg;
-            }
+            return msg;
+        } else {
+            return new Message("null|null|null|null|null");
         }
-    
+    }
 
     public boolean isDeltaElection() {
         return deltaElection;
@@ -183,7 +167,7 @@ public class MainNode {
     public int getSrcNum() {
         return srcNum;
     }
-    
+
     public int getSrcId() {
         return srcId;
     }

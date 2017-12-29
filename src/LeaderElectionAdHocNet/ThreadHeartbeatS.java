@@ -19,7 +19,7 @@ public class ThreadHeartbeatS extends Thread {
     private int secondsPassed;
     private volatile boolean flagWait;
     private String state;
-    private int id_hb;
+    private int idHb;
 
     ThreadHeartbeatS(MainNode n) {
 
@@ -28,7 +28,7 @@ public class ThreadHeartbeatS extends Thread {
         secondsPassed = 0;
         flagWait = false;
         state = "SendHeartbeat";
-        id_hb = 0;
+        idHb = 0;
 
     }
 
@@ -37,27 +37,22 @@ public class ThreadHeartbeatS extends Thread {
         TimerTask task = new TimerTask() {
             public void run() {
                 secondsPassed++;
-                if ((secondsPassed == 3) && (flagWait == true)) {
+                if ((secondsPassed == 1) && (flagWait == true)) {
                     flagWait = false;
-
                 }
-                // System.out.println(" contador " + secondsPassed);
             }
         };
         myTimer.schedule(task, 0, 1000);
 
         while (true) {
-
-           // System.err.println("meu id " + myNode.getId() + " meu lider " + myNode.getLid() + " lel " + (myNode.getId() == myNode.getLid()));
             if (myNode.getId() == myNode.getLid()) {
-             
                 if ((flagWait == false) && (state.equals("SendHeartbeat"))) {
 
-                    id_hb ++;
-                    
+                    idHb++;
+
                     //  envia heartbeat a todos os vizinhos
                     for (Integer id : myNode.getN().keySet()) {
-                        myNode.getN().get(id).sendHeartbeat(myNode.getId(), id_hb);
+                        myNode.getN().get(id).sendHeartbeat(myNode.getId(), idHb);
 
                     }
                     secondsPassed = 0;
@@ -65,9 +60,6 @@ public class ThreadHeartbeatS extends Thread {
                     state = "Wait";
 
                 } else if ((flagWait == false) && (state.equals("Wait"))) {
-
-                    flagWait = true;
-                    secondsPassed = 0;
                     state = "SendHeartbeat";
                 }
             }
