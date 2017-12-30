@@ -33,12 +33,14 @@ public class MainNode {
     private int srcNum;
     private int srcId;
 
+    private volatile boolean firstExec;
+    
     private int nodePort;
     public DatagramSocket socket;
 
-    ThreadReceive threadR;
-    ThreadProbes threadProbes;
-    ThreadHeartbeatS threadHeartbeat;
+    public ThreadReceive threadR;
+    public ThreadProbes threadProbes;
+    public ThreadHeartbeatS threadHeartbeat;
 
     public MainNode() {
         deltaElection = false;
@@ -52,10 +54,6 @@ public class MainNode {
         srcId = this.id;
         this.nodePort = -1;
 
-        // Criar a thread para receber as msg
-        threadR = new ThreadReceive(this);
-        threadProbes = new ThreadProbes(this);
-        threadHeartbeat = new ThreadHeartbeatS(this);
     }
 
     public void resetElection() {
@@ -66,6 +64,14 @@ public class MainNode {
         s.removeAll(s);
     }
 
+    public boolean isFirstExec() {
+        return firstExec;
+    }
+
+    public void setFirstExec(boolean firstExec) {
+        this.firstExec = firstExec;
+    }
+    
     public void setNodePort(int nodePort) {
         this.nodePort = nodePort;
         try {
@@ -128,12 +134,11 @@ public class MainNode {
     }
 
     public Message getMessage(String state) {
-
         Message msg;
+        
         if (this.threadR.queue.peek() != null) {
             msg = this.threadR.queue.poll();
-            System.out.println("Recebido: " + msg.getTrama());
-
+            //System.out.println("Recebido: " + msg.getTrama());
             return msg;
         } else {
             return new Message("null|null|null|null|null");

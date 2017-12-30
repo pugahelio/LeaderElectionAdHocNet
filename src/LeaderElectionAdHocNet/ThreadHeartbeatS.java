@@ -7,6 +7,8 @@ package LeaderElectionAdHocNet;
 
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -47,21 +49,22 @@ public class ThreadHeartbeatS extends Thread {
         while (true) {
             if (myNode.getId() == myNode.getLid()) {
                 if ((flagWait == false) && (state.equals("SendHeartbeat"))) {
-
                     idHb++;
-
                     //  envia heartbeat a todos os vizinhos
-                    for (Integer id : myNode.getN().keySet()) {
+                    myNode.getN().keySet().stream().forEach((id) -> {
                         myNode.getN().get(id).sendHeartbeat(myNode.getId(), idHb);
-
-                    }
+                    });
                     secondsPassed = 0;
                     flagWait = true;
                     state = "Wait";
-
                 } else if ((flagWait == false) && (state.equals("Wait"))) {
                     state = "SendHeartbeat";
                 }
+            }
+            try {
+                Thread.sleep(10);
+            } catch (InterruptedException ex) {
+                Logger.getLogger(ThreadHeartbeatS.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
     }

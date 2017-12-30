@@ -23,8 +23,8 @@ public class Node {
     private byte[] bufOut = new byte[2048];
     private DatagramPacket packetOut;
     private int msgId;
-    public boolean testingProbes;
-    public boolean alive;
+    public volatile boolean testingProbes;
+    public volatile boolean alive;
     
     private boolean blackListed;
 
@@ -88,7 +88,7 @@ public class Node {
                 Logger.getLogger(Node.class.getName()).log(Level.SEVERE, null, ex);
             }
             msgId++;
-            System.err.println("Enviado " + msg.getTrama());
+            //System.err.println("Enviado " + msg.getTrama());
         }
     }
 
@@ -105,7 +105,7 @@ public class Node {
                 Logger.getLogger(Node.class.getName()).log(Level.SEVERE, null, ex);
             }
             msgId++;
-            System.err.println("Enviado " + msg.getTrama());
+            //System.err.println("Enviado " + msg.getTrama());
         }
     }
 
@@ -122,7 +122,7 @@ public class Node {
                 Logger.getLogger(Node.class.getName()).log(Level.SEVERE, null, ex);
             }
             msgId++;
-            System.err.println("Enviado " + msg.getTrama());
+            //System.err.println("Enviado " + msg.getTrama());
         }
     }
 
@@ -138,13 +138,13 @@ public class Node {
                 Logger.getLogger(Node.class.getName()).log(Level.SEVERE, null, ex);
             }
             msgId++;
-            System.err.println("Enviado " + msg.getTrama());
+            //System.err.println("Enviado " + msg.getTrama());
         }
     }
     
-    public void sendHeartbeat(int value, int id_hb) {
+    public void sendHeartbeat(int lider, int idHb) {
         if (!blackListed) {
-            Message msg = new Message(msgId, mainNodeId, id, "HEARTBEAT", Integer.toString(value) + "," + id_hb);
+            Message msg = new Message(msgId, mainNodeId, id, "HEARTBEAT", lider + "," + idHb);
             
             bufOut = msg.getTrama().getBytes();
             packetOut = new DatagramPacket(bufOut, bufOut.length, nodeAddress, nodePort);
@@ -154,7 +154,7 @@ public class Node {
                 Logger.getLogger(Node.class.getName()).log(Level.SEVERE, null, ex);
             }
             msgId++;
-            System.err.println("Enviado " + msg.getTrama());
+            //System.err.println("Enviado " + msg.getTrama());
         }
     }
 
@@ -170,7 +170,7 @@ public class Node {
                 Logger.getLogger(Node.class.getName()).log(Level.SEVERE, null, ex);
             }
             msgId++;
-            System.err.println("Enviado " + msg.getTrama());
+            //System.err.println("Enviado " + msg.getTrama());
         }
     }
 }

@@ -13,31 +13,39 @@ import java.util.logging.Logger;
 
 public class LeaderElectionAdHocNet {
 
-    static String state = "STANDBY";
-    static Message msg = new Message("null|null|null|null|null");
-    static int mostValuedNode;
-    static int srcNumElect = 0;
-    static int srcIdElect = 0;
-    static int srcNumAux = 0;
-    static int srcIdAux = 0;
-    static BufferedReader bufferReader;
-    static NonblockingBufferedReader inputKeyBoard;
+    private static String state = "STANDBY";
+    private static Message msg = new Message("null|null|null|null|null");
+    private static int mostValuedNode;
+    private static int srcNumElect = 0;
+    private static int srcIdElect = 0;
+    private static int srcNumAux = 0;
+    private static int srcIdAux = 0;
+    private static BufferedReader bufferReader;
+    private static NonblockingBufferedReader inputKeyBoard;
+    
+  //  private int idHbAux;
 
     public static void main(String[] args) throws InterruptedException {
         MainNode myNode = new MainNode();
         configuration(myNode, args[0]);
         System.out.println("This Node ID: " + myNode.getId());
+        myNode.setFirstExec(true);
 
+//      idHbAux = 0;
+        
         bufferReader = new BufferedReader(new InputStreamReader(System.in));
         
         inputKeyBoard = new NonblockingBufferedReader(bufferReader);
         
         mostValuedNode = myNode.getId();
 
+        // Criar a thread para receber as msg
+        myNode.threadR = new ThreadReceive(myNode);
+        myNode.threadProbes = new ThreadProbes(myNode);
+        myNode.threadHeartbeat = new ThreadHeartbeatS(myNode);
+
         // Iniciar a thread de receber msg
         myNode.threadR.start();
-
-        TimeUnit.SECONDS.sleep(1);
 
         myNode.threadProbes.start();
 
@@ -45,14 +53,15 @@ public class LeaderElectionAdHocNet {
 
         
         while (true) {
-
+            TimeUnit.MILLISECONDS.sleep(0);
+            
             reconfigureNode(myNode);
 
             stateMachineElection(myNode);
 
         }
     }
-
+    
     private static void reconfigureNode(MainNode n) {
         String line = "";
         String splitBy = " ";
@@ -62,12 +71,16 @@ public class LeaderElectionAdHocNet {
                 String[] info = line.split(splitBy);
              
                 if (info[0].equals("add")) {
-                    n.getN().get(Integer.parseInt(info[1])).setBlackListed(false);
-                     System.out.println("Adicionado nó: " + info[1]);
+                    if (n.getN().containsKey(Integer.parseInt(info[1])) == true) {
+                        n.getN().get(Integer.parseInt(info[1])).setBlackListed(false);
+                        System.out.println("Adicionado nó: " + info[1]);
+                    }
                 }
                 else if (info[0].equals("rm")) {
-                    n.getN().get(Integer.parseInt(info[1])).setBlackListed(true);
-                    System.out.println("Removido nó: " + info[1]);
+                    if (n.getN().containsKey(Integer.parseInt(info[1])) == true) {
+                        n.getN().get(Integer.parseInt(info[1])).setBlackListed(true);
+                        System.out.println("Removido nó: " + info[1]);
+                    }
                 }
             }
         } catch (IOException ex) {
@@ -76,8 +89,10 @@ public class LeaderElectionAdHocNet {
     }
     
     private static void stateMachineElection(MainNode n) throws InterruptedException {
-
-        TimeUnit.MILLISECONDS.sleep(300);
+        int init;
+        int end;
+//        int lider;
+//        int idHb;
         
         switch (state) {
             case "STANDBY":
@@ -87,15 +102,13 @@ public class LeaderElectionAdHocNet {
                 srcIdElect = 0; // reset do src id da eleiçao
                 n.setDeltaiElection(false);
 
-                if (n.getLid() == -1 && !n.isDeltaElection()) {
+                if ((n.getLid() == -1 && !n.isDeltaElection()) || n.isFirstExec()) {
+                    n.setFirstExec(false);
                     state = "START_ELECTION";
                 } else {
                     msg = n.getMessage(state);
                     if (msg.getTypeMsg().equals("ELECTION")) {
                         state = "CHECK_ELECTION";
-                    } else if ((msg.getTypeMsg().equals("LEADER")) && (!(Integer.parseInt(msg.getData()) == n.getLid()))) {
-                        n.setLid(Integer.parseInt(msg.getData()));
-                        state = "BROADCAST_LEADER";
                     }
                 }
                 break;
@@ -122,9 +135,8 @@ public class LeaderElectionAdHocNet {
             //espera por receber os ack todos para responder
 
             case "CHECK_ELECTION":
-
-                int init = 0;
-                int end = msg.getData().indexOf(",");
+                init = 0;
+                end = msg.getData().indexOf(",");
                 srcNumAux = Integer.parseInt(msg.getData().substring(init, end));
 
                 init = end + 1;
@@ -170,11 +182,7 @@ public class LeaderElectionAdHocNet {
                 } else if (msg.getTypeMsg().equals("ELECTION")) {
 
                     state = "CHECK_ELECTION";
-                } else if ((msg.getTypeMsg().equals("LEADER")) && (!(Integer.parseInt(msg.getData()) == n.getLid()))) {
-                    n.setLid(Integer.parseInt(msg.getData()));
-                    state = "BROADCAST_LEADER";
                 }
-
                 break;
 
             case "RETRANSMIT_ELECTION":
@@ -203,26 +211,22 @@ public class LeaderElectionAdHocNet {
                 break;
 
             case "ACK_TO_PARENT":
-         
-                if (n.getN().containsKey(n.getP())) {
-                    //envia nó mais valioso
-                    n.getN().get(n.getP()).sendAck(mostValuedNode);
-                    //coloca a variavel que diz se ele já enviou a true
-                    n.setDeltaACK(true);
-                    state = "WAIT_LEADER";
-                }
-                else{
-                    n.setLid(mostValuedNode);
-                    state = "BROADCAST_LEADER";
-                }
-                
+
+                //envia nó mais valioso
+                n.getN().get(n.getP()).sendAck(mostValuedNode);
+                //coloca a variavel que diz se ele já enviou a true
+                n.setDeltaACK(true);
+                state = "WAIT_LEADER";
+
                 break;
 
             case "WAIT_LEADER":
-
                 msg = n.getMessage(state);
-                if (msg.getTypeMsg().equals("LEADER")) {
-
+                if (!n.getN().get(n.getP()).isAlive()) {
+                    n.setP(-1);
+                    n.setLid(mostValuedNode);
+                    state = "BROADCAST_LEADER";
+                } else if (msg.getTypeMsg().equals("LEADER")) {
                     n.setLid(Integer.parseInt(msg.getData()));
                     state = "BROADCAST_LEADER";
                 } else if (msg.getTypeMsg().equals("ELECTION")) {
@@ -245,9 +249,7 @@ public class LeaderElectionAdHocNet {
                 break;
 
         }
-
-        System.out.println("State = " + state + " || Lider: " + n.getLid());
-
+        System.out.println("State = " + state + " | Lider: " + n.getLid() + " | Pai = " + n.getP());
     }
 
     /**
