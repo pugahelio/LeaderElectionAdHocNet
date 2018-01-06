@@ -41,6 +41,7 @@ public class MainNode {
     public ThreadReceive threadR;
     public ThreadProbes threadProbes;
     public ThreadHeartbeatS threadHeartbeat;
+    public ThreadReconfig threadReconfig;
 
     public MainNode() {
         deltaElection = false;
@@ -53,6 +54,7 @@ public class MainNode {
         srcNum = 0;
         srcId = this.id;
         this.nodePort = -1;
+        
 
     }
 

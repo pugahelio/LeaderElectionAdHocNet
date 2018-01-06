@@ -36,7 +36,7 @@ public class ThreadProbes extends Thread {
         TimerTask task = new TimerTask() {
             public void run() {
                 secondsPassed++;
-                if ((secondsPassed >= 1) && (flagWait == true)) {
+                if ((secondsPassed >= 2) && (flagWait == true)) {
                     flagWait = false;
                 }
             }
@@ -51,6 +51,7 @@ public class ThreadProbes extends Thread {
                 for (Integer id : myNode.getN().keySet()) {
                     myNode.getN().get(id).setTestingProbes(true);
                     myNode.getN().get(id).sendProbe();
+                    //System.out.println("Probe enviado para " + myNode.getN().get(id).getId());
                 }
                 
                 if(myNode.isDeltaElection() && myNode.getP()>0) {
@@ -67,7 +68,7 @@ public class ThreadProbes extends Thread {
                 for (Integer id : myNode.getN().keySet()) {
                     if ((myNode.getN().get(id).isTestingProbes())) {
                         myNode.getN().get(id).setAlive(false);
-                        System.err.println("\nNó não operacional: " + myNode.getN().get(id).getId() + "\n");
+                        System.err.println("Nó não operacional: " + myNode.getN().get(id).getId());
                         if (myNode.getS().contains(id)) {
                             myNode.getS().remove(id);
                         }

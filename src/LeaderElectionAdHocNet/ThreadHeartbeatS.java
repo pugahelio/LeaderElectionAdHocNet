@@ -53,6 +53,7 @@ public class ThreadHeartbeatS extends Thread {
                     //  envia heartbeat a todos os vizinhos
                     myNode.getN().keySet().stream().forEach((id) -> {
                         myNode.getN().get(id).sendHeartbeat(myNode.getId(), idHb);
+                        //System.out.println("HB enviado para " + myNode.getId());
                     });
                     secondsPassed = 0;
                     flagWait = true;

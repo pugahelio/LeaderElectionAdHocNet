@@ -20,8 +20,7 @@ public class LeaderElectionAdHocNet {
     private static int srcIdElect = 0;
     private static int srcNumAux = 0;
     private static int srcIdAux = 0;
-    private static BufferedReader bufferReader;
-    private static NonblockingBufferedReader inputKeyBoard;
+    
     
   //  private int idHbAux;
 
@@ -33,9 +32,7 @@ public class LeaderElectionAdHocNet {
 
 //      idHbAux = 0;
         
-        bufferReader = new BufferedReader(new InputStreamReader(System.in));
         
-        inputKeyBoard = new NonblockingBufferedReader(bufferReader);
         
         mostValuedNode = myNode.getId();
 
@@ -43,25 +40,30 @@ public class LeaderElectionAdHocNet {
         myNode.threadR = new ThreadReceive(myNode);
         myNode.threadProbes = new ThreadProbes(myNode);
         myNode.threadHeartbeat = new ThreadHeartbeatS(myNode);
-
+        myNode.threadReconfig = new ThreadReconfig(myNode);
         // Iniciar a thread de receber msg
+        
         myNode.threadR.start();
+        
+        TimeUnit.SECONDS.sleep(1);
 
         myNode.threadProbes.start();
 
         myNode.threadHeartbeat.start();
+        
+        myNode.threadReconfig.start();
 
         
         while (true) {
             TimeUnit.MILLISECONDS.sleep(0);
             
-            reconfigureNode(myNode);
+           // reconfigureNode(myNode);
 
             stateMachineElection(myNode);
 
         }
     }
-    
+    /*
     private static void reconfigureNode(MainNode n) {
         String line = "";
         String splitBy = " ";
@@ -87,7 +89,7 @@ public class LeaderElectionAdHocNet {
             Logger.getLogger(LeaderElectionAdHocNet.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-    
+    */
     private static void stateMachineElection(MainNode n) throws InterruptedException {
         int init;
         int end;
@@ -249,7 +251,7 @@ public class LeaderElectionAdHocNet {
                 break;
 
         }
-        System.out.println("State = " + state + " | Lider: " + n.getLid() + " | Pai = " + n.getP());
+        //System.out.println("State = " + state + " | Lider: " + n.getLid() + " | Pai = " + n.getP());
     }
 
     /**
