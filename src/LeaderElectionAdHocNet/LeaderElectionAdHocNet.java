@@ -55,41 +55,12 @@ public class LeaderElectionAdHocNet {
 
         
         while (true) {
-            TimeUnit.MILLISECONDS.sleep(0);
+            TimeUnit.MILLISECONDS.sleep(50);
             
-           // reconfigureNode(myNode);
-
             stateMachineElection(myNode);
 
         }
     }
-    /*
-    private static void reconfigureNode(MainNode n) {
-        String line = "";
-        String splitBy = " ";
-
-        try {
-            while ((line = inputKeyBoard.readLine()) != null) {
-                String[] info = line.split(splitBy);
-             
-                if (info[0].equals("add")) {
-                    if (n.getN().containsKey(Integer.parseInt(info[1])) == true) {
-                        n.getN().get(Integer.parseInt(info[1])).setBlackListed(false);
-                        System.out.println("Adicionado nó: " + info[1]);
-                    }
-                }
-                else if (info[0].equals("rm")) {
-                    if (n.getN().containsKey(Integer.parseInt(info[1])) == true) {
-                        n.getN().get(Integer.parseInt(info[1])).setBlackListed(true);
-                        System.out.println("Removido nó: " + info[1]);
-                    }
-                }
-            }
-        } catch (IOException ex) {
-            Logger.getLogger(LeaderElectionAdHocNet.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
-    */
     private static void stateMachineElection(MainNode n) throws InterruptedException {
         int init;
         int end;
@@ -127,7 +98,7 @@ public class LeaderElectionAdHocNet {
                 for (Integer id : n.getN().keySet()) {
                     n.getN().get(id).sendElection(srcNumElect, srcIdElect);
                     if (n.getN().get(id).isAlive()) {
-                        System.err.println("Adicionei " + id);
+                        //System.err.println("Adicionei " + id);
                         n.addS(id);
                     }
                 }
@@ -203,7 +174,7 @@ public class LeaderElectionAdHocNet {
                     if (id != n.getP()) {
                         n.getN().get(id).sendElection(srcNumElect, srcIdElect);
                         if (n.getN().get(id).isAlive()) {
-                            System.err.println("Adicionei " + id);
+                            //System.err.println("Adicionei " + id);
                             n.addS(id);
                         }
                     }
@@ -246,7 +217,7 @@ public class LeaderElectionAdHocNet {
                 }
 
                 state = "STANDBY";
-                System.out.println(" Lider: " + n.getLid() + " Pai " + n.getP() + " src_num " + srcNumElect + " src_id " + srcIdElect);
+                System.out.println("\nLider: " + n.getLid() + " Pai " + n.getP() + " src_num " + srcNumElect + " src_id " + srcIdElect + "\n");
 
                 break;
 

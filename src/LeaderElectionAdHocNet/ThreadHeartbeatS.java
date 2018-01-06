@@ -33,13 +33,12 @@ public class ThreadHeartbeatS extends Thread {
         idHb = 0;
 
     }
-
     public void run() {
 
         TimerTask task = new TimerTask() {
             public void run() {
                 secondsPassed++;
-                if ((secondsPassed == 1) && (flagWait == true)) {
+                if ((secondsPassed > 1) && (flagWait == true)) {
                     flagWait = false;
                 }
             }
@@ -53,7 +52,7 @@ public class ThreadHeartbeatS extends Thread {
                     //  envia heartbeat a todos os vizinhos
                     myNode.getN().keySet().stream().forEach((id) -> {
                         myNode.getN().get(id).sendHeartbeat(myNode.getId(), idHb);
-                        //System.out.println("HB enviado para " + myNode.getId());
+                        //System.out.println("HB enviado para " + id);
                     });
                     secondsPassed = 0;
                     flagWait = true;

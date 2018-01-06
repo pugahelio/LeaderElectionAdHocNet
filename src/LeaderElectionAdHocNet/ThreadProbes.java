@@ -36,7 +36,7 @@ public class ThreadProbes extends Thread {
         TimerTask task = new TimerTask() {
             public void run() {
                 secondsPassed++;
-                if ((secondsPassed >= 2) && (flagWait == true)) {
+                if ((secondsPassed > 1) && (flagWait == true)) {
                     flagWait = false;
                 }
             }
@@ -68,7 +68,7 @@ public class ThreadProbes extends Thread {
                 for (Integer id : myNode.getN().keySet()) {
                     if ((myNode.getN().get(id).isTestingProbes())) {
                         myNode.getN().get(id).setAlive(false);
-                        System.err.println("Nó não operacional: " + myNode.getN().get(id).getId());
+                        //System.err.println("Nó não operacional: " + myNode.getN().get(id).getId());
                         if (myNode.getS().contains(id)) {
                             myNode.getS().remove(id);
                         }

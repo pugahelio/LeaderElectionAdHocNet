@@ -55,6 +55,11 @@ public class ThreadReconfig extends Thread {
             } catch (IOException ex) {
                 Logger.getLogger(LeaderElectionAdHocNet.class.getName()).log(Level.SEVERE, null, ex);
             }
+            try {
+                Thread.sleep(10);
+            } catch (InterruptedException ex) {
+                Logger.getLogger(ThreadHeartbeatS.class.getName()).log(Level.SEVERE, null, ex);
+            }
         }
 
     }

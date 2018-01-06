@@ -47,7 +47,7 @@ public class ThreadReceive extends Thread {
                     secondsPassed++;
                     //System.out.println("Contador " + secondsPassed);
                 }
-                if ((secondsPassed > 2) && (myNode.getLid() != (myNode.getId())) && (myNode.getLid() != (-1)) && (!myNode.isDeltaElection())) {
+                if ((secondsPassed > 4) && (myNode.getLid() != (myNode.getId())) && (myNode.getLid() != (-1)) && (!myNode.isDeltaElection())) {
                     System.err.println("\nLider inativo \n");
                     myNode.setLid(-1);
                     myNode.setDeltaiElection(false);
@@ -65,6 +65,7 @@ public class ThreadReceive extends Thread {
         int idHb;
         int init;
         int end;
+        idHbAux = 0;
         while (true) {
 
             do {
@@ -75,9 +76,10 @@ public class ThreadReceive extends Thread {
                 }
                 trama = new String(packetIn.getData(), 0, packetIn.getLength());
                 msg = new Message(trama);
-            } while ((myNode.isFirstExec() && msg.getTypeMsg().equals("HEARTBEAT"))
-                    ||((msg.getDestId() != myNode.getId()) 
-                    || (myNode.getN().get(msg.getSenderId()).isBlackListed()) 
+            } while ((myNode.isFirstExec() && msg.getTypeMsg().equals("HEARTBEAT")) //na primeira execuçao ignorar heartbeat para obrigar a fazer uma eleiçao
+                    || ((msg.getDestId() != myNode.getId())  // se nao for para mim
+                    || (myNode.getN().get(msg.getSenderId()).isBlackListed())  // se estiver na blak list
+                    || (myNode.isDeltaElection() && msg.getTypeMsg().equals("HEARTBEAT")) // ignorar heartbeats durante eleiçao
                     || (myNode.isDeltaElection() && !myNode.getN().get(msg.getSenderId()).isAlive()))); /* Se estiver numa eleição e se o no do qual recebi não esta vivo.
             Isto implica que tu não recebas mensagens quando o nó é dado como morto até saires da eleição
             */
@@ -101,14 +103,18 @@ public class ThreadReceive extends Thread {
                     init = end + 1;
                     end = msg.getData().length();
                     idHb = Integer.parseInt(msg.getData().substring(init, end));
-                    //System.out.println("Heartbeat receive from " + lider);
                     //só faz broadcast se...
+                    
                     if (lider == myNode.getLid()) {
                         this.resetSecondsPassed();
-                        if (idHbAux < idHb) {
+                        
+                            
+                    //System.out.println("Heartbeat receive from " + lider + " idHbAux " + idHbAux + " idHb " + idHb);
+                        if (idHbAux != idHb){ 
                             idHbAux = idHb;
                             for (Integer id : myNode.getN().keySet()) {
                                 myNode.getN().get(id).sendHeartbeat(lider, idHb);
+                                //System.out.println("HB reenviado para " + id);
 
                             }
                         }
