@@ -41,7 +41,7 @@ public class ThreadProbes extends Thread {
                 }
             }
         };
-        myTimer.schedule(task, 0, 1000);
+        myTimer.schedule(task, 0, 300);
         
         while (true) {
 

@@ -84,7 +84,6 @@ public class ThreadReceive extends Thread {
             Isto implica que tu não recebas mensagens quando o nó é dado como morto até saires da eleição
             */
 
-            //System.out.println("Recebido: " + msg.getTrama());
             
             switch (msg.getTypeMsg()) {
                 case "PROBE":

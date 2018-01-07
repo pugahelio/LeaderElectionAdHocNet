@@ -55,7 +55,7 @@ public class LeaderElectionAdHocNet {
 
         
         while (true) {
-            TimeUnit.MILLISECONDS.sleep(50);
+            TimeUnit.MILLISECONDS.sleep(0);
             
             stateMachineElection(myNode);
 
@@ -77,6 +77,9 @@ public class LeaderElectionAdHocNet {
 
                 if ((n.getLid() == -1 && !n.isDeltaElection()) || n.isFirstExec()) {
                     n.setFirstExec(false);
+                    n.resetElection();
+                    //esta em eleiçao
+                    n.setDeltaiElection(true);
                     state = "START_ELECTION";
                 } else {
                     msg = n.getMessage(state);
@@ -87,9 +90,6 @@ public class LeaderElectionAdHocNet {
                 break;
 
             case "START_ELECTION":
-                n.resetElection();
-                //esta em eleiçao
-                n.setDeltaiElection(true);
                 //imcrementa o src
                 n.setSrc(n.getSrcNum() + 1, n.getId());
                 srcNumElect = n.getSrcNum();
@@ -119,11 +119,13 @@ public class LeaderElectionAdHocNet {
                 //Se tiver src igual estou a falar do mesmo logo responde instataneamente.
                 if (srcNumAux == srcNumElect && srcIdAux == srcIdElect) {
                     n.getN().get(msg.getSenderId()).sendAck(mostValuedNode);
+                    //System.out.println("ACK RAPIDO");
                     state = "WAIT_ACK";
 
                     // Uma eleição com src superior
                 } else if (compareSrc(srcNumAux, srcIdAux, srcNumElect, srcIdElect)) {
                     state = "RETRANSMIT_ELECTION";
+                    //System.out.println("REtransmit");
                 } else if (!(compareSrc(srcNumAux, srcIdAux, srcNumElect, srcIdElect))) {
                     state = "WAIT_ACK";
 
@@ -218,7 +220,7 @@ public class LeaderElectionAdHocNet {
 
                 state = "STANDBY";
                 System.out.println("\nLider: " + n.getLid() + " Pai " + n.getP() + " src_num " + srcNumElect + " src_id " + srcIdElect + "\n");
-
+                //System.out.println("Terminei a eleição \n");
                 break;
 
         }

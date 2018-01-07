@@ -50,6 +50,11 @@ public class ThreadReconfig extends Thread {
                             n.getN().get(Integer.parseInt(info[1])).setBlackListed(true);
                             System.out.println("Removido nó: " + info[1]);
                         }
+                        
+                        }
+                    else if (info[0].equals("info")){
+                            System.out.println("\nLider: " + n.getLid() + " Pai " + n.getP() + "\n");
+
                     }
                 }
             } catch (IOException ex) {
