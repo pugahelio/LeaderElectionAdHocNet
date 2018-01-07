@@ -41,7 +41,11 @@ public class LeaderElectionAdHocNet {
         myNode.threadProbes = new ThreadProbes(myNode);
         myNode.threadHeartbeat = new ThreadHeartbeatS(myNode);
         myNode.threadReconfig = new ThreadReconfig(myNode);
+        myNode.threadPerformance = new ThreadPerformance(myNode);
+
         // Iniciar a thread de receber msg
+        
+        myNode.threadPerformance.start();
         
         myNode.threadR.start();
         
@@ -52,10 +56,12 @@ public class LeaderElectionAdHocNet {
         myNode.threadHeartbeat.start();
         
         myNode.threadReconfig.start();
+        
+        
 
         
         while (true) {
-            TimeUnit.MILLISECONDS.sleep(0);
+            //TimeUnit.MILLISECONDS.sleep(0);
             
             stateMachineElection(myNode);
 
@@ -70,19 +76,18 @@ public class LeaderElectionAdHocNet {
         switch (state) {
             case "STANDBY":
                 //n.resetElection(); // para estar permanentemente a fazer elections
-                mostValuedNode = n.getId();
+                mostValuedNode = n.getId(); //no inicio o mostvalued é o proprio no
                 srcNumElect = 0; // reset do src num da eleiçao
                 srcIdElect = 0; // reset do src id da eleiçao
                 n.setDeltaiElection(false);
 
                 if ((n.getLid() == -1 && !n.isDeltaElection()) || n.isFirstExec()) {
-                    n.setFirstExec(false);
-                    n.resetElection();
-                    //esta em eleiçao
-                    n.setDeltaiElection(true);
+                    n.setFirstExec(false); // vai iniciar uma eleiçao, logo fica a false
+                    n.resetElection(); // reinicia  pId ; deltaACK ; lidId ; s
+                    n.setDeltaiElection(true); //esta em eleiçao
                     state = "START_ELECTION";
                 } else {
-                    msg = n.getMessage(state);
+                    msg = n.getMessage(state); //checka se recebeu alguma mensagem
                     if (msg.getTypeMsg().equals("ELECTION")) {
                         state = "CHECK_ELECTION";
                     }
