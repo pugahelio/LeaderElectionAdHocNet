@@ -8,6 +8,7 @@ package LeaderElectionAdHocNet;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.text.DecimalFormat;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -50,12 +51,23 @@ public class ThreadReconfig extends Thread {
                             n.getN().get(Integer.parseInt(info[1])).setBlackListed(true);
                             System.out.println("Removido nó: " + info[1]);
                         }
-                        
-                        }
-                    else if (info[0].equals("info")){
-                            System.out.println("\nLider: " + n.getLid() + " Pai " + n.getP() + "\n");
+                    } else if (info[0].equals("perf")) {
+                        long currentTime = System.nanoTime();
+
+                        long initialTime = n.threadPerformance.getStartTime();
+
+                        DecimalFormat df = new DecimalFormat("0.000");
+
+                        System.out.println("Fraction of Time Without Leader (F): "
+                                + df.format(((double) n.threadPerformance.getTotalTimeInElection() / ((currentTime - initialTime) / 1000000))));
+
+                        System.out.println("Number of Elections (N): " + n.threadPerformance.getNumberOfElections());
+
+                        System.out.println("Message Overhead (M): "
+                                + ((double) n.threadPerformance.getNumberOfMessagesAnt() / n.threadPerformance.getNumberOfElections()));
 
                     }
+
                 }
             } catch (IOException ex) {
                 Logger.getLogger(LeaderElectionAdHocNet.class.getName()).log(Level.SEVERE, null, ex);

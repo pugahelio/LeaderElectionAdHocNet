@@ -23,7 +23,7 @@ public class ThreadReceive extends Thread {
     private MainNode myNode;
     public BlockingQueue<Message> queue;
 
-    private volatile int secondsPassed;
+    public volatile int secondsPassed;
     private Timer myTimer;
 
     //Comunicações

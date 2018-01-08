@@ -103,7 +103,7 @@ public class Node {
             }
             msgId++;
             msgCounter++;
-            System.err.println("Enviado " + msg.getTrama());
+            //System.err.println("Enviado " + msg.getTrama());
         }
     }
 
@@ -121,7 +121,7 @@ public class Node {
             }
             msgId++;
             msgCounter++;
-            System.err.println("Enviado " + msg.getTrama());
+            //System.err.println("Enviado " + msg.getTrama());
         }
     }
 
@@ -139,7 +139,7 @@ public class Node {
             }
             msgId++;
             msgCounter++;
-            System.err.println("Enviado " + msg.getTrama());
+            //System.err.println("Enviado " + msg.getTrama());
         }
     }
 

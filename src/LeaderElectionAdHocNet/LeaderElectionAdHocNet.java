@@ -224,6 +224,7 @@ public class LeaderElectionAdHocNet {
                 }
 
                 state = "STANDBY";
+                n.threadR.secondsPassed = 0;
                 System.out.println("\nLider: " + n.getLid() + " Pai " + n.getP() + " src_num " + srcNumElect + " src_id " + srcIdElect + "\n");
                 //System.out.println("Terminei a eleição \n");
                 break;
