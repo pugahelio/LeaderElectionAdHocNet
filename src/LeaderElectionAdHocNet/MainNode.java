@@ -54,8 +54,6 @@ public class MainNode {
         srcNum = 0;
         srcId = this.id;
         this.nodePort = -1;
-        
-
     }
 
     public void resetElection() {
@@ -135,7 +133,7 @@ public class MainNode {
         return id;
     }
 
-    public Message getMessage(String state) {
+    public Message getMessage() {
         Message msg;
         
         if (this.threadR.queue.peek() != null) {

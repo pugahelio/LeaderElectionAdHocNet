@@ -16,6 +16,11 @@ public class Message {
     private String data;
     private String trama;
     private String destId;
+    
+    private int init, end, lider, flag, max = 0;
+    private int deltaElection;
+    private int mSrcNum = 0;
+    private int mSrcId = 0;
 
     public Message(int msgID, int senderId, int destId, String msgType, String text) {
         this.senderId = Integer.toString(senderId);
@@ -29,29 +34,9 @@ public class Message {
 
     public Message(String tramaCompleta) {
         trama = tramaCompleta;
-//        String[] dividido;
-//        
-//        dividido = trama.split("|");
-//        if (dividido.length > 0) {
-//            idMsg = dividido[0];
-//        }
-//        if (dividido.length > 1) {
-//            senderId = dividido[1];
-//        }
-//        if (dividido.length > 2) {
-//            destId = dividido[2];
-//        }
-//        if (dividido.length > 3) {
-//            typeMsg = dividido[3];
-//        }
-//        if (dividido.length > 4) {
-//            data = dividido[4];
-//        }
-
         
-        
-        int init = 0;
-        int end = tramaCompleta.indexOf('|');
+        init = 0;
+        end = tramaCompleta.indexOf('|');
         idMsg = tramaCompleta.substring(init, end);
 
         init = end + 1;
@@ -68,9 +53,76 @@ public class Message {
 
         init = end + 1;
         end = tramaCompleta.length();
-        if(end > init) 
+        if(end > init) { 
             data = tramaCompleta.substring(init, end);
-        
+            if (typeMsg.equals("ELECTION")) {
+            init = 0;
+            end = data.indexOf(",");
+            if (end != -1) {
+                mSrcNum = Integer.parseInt(data.substring(init, end));
+
+                init = end + 1;
+                end = data.indexOf(",", init);
+                if (end != -1) {
+                    mSrcId = Integer.parseInt(data.substring(init, end));
+
+                    init = end + 1;
+                    end = data.length();
+                    if (end > init) {
+                        lider = Integer.parseInt(data.substring(init, end));
+                    }
+                }
+            }
+        } else if (typeMsg.equals("ACK")) {
+            init = 0;
+            end = data.indexOf(",");
+            if (end != -1) {
+                mSrcNum = Integer.parseInt(data.substring(init, end));
+
+                init = end + 1;
+                end = data.indexOf(",", init);
+                if (end != -1) {
+                    mSrcId = Integer.parseInt(data.substring(init, end));
+
+                    init = end + 1;
+                    end = data.indexOf(",", init);
+                    if (end != -1) {
+                        flag = Integer.parseInt(data.substring(init, end));
+
+                        init = end + 1;
+                        end = data.length();
+                        if (end > init) {
+                            max = Integer.parseInt(data.substring(init, end));
+                        }
+                    }
+                }
+            }
+        } else if (typeMsg.equals("REPLY")) {
+            init = 0;
+            end = data.indexOf(",");
+            if (end != -1) {
+                mSrcNum = Integer.parseInt(data.substring(init, end));
+
+                init = end + 1;
+                end = data.indexOf(",", init);
+                if (end != -1) {
+                    mSrcId = Integer.parseInt(data.substring(init, end));
+
+                    init = end + 1;
+                    end = data.indexOf(",", init);
+                    if (end != -1) {
+                        deltaElection = Integer.parseInt(data.substring(init, end));
+
+                        init = end + 1;
+                        end = data.length();
+                        if (end > init) {
+                            lider = Integer.parseInt(data.substring(init, end));
+                        }
+                    }
+                }
+            }
+        }
+        }
         //System.out.println(idMsg + "!" + senderId + "!" + destId + "!" + typeMsg + "!" + data);
         
     }
@@ -84,7 +136,10 @@ public class Message {
     }
 
     public int getSenderId() {
-        return Integer.parseInt(senderId);
+        if(senderId.equals("null"))
+            return -1;
+        else
+            return Integer.parseInt(senderId);
     }
 
     public int getIdMsg() {
@@ -98,4 +153,30 @@ public class Message {
     public String getData() {
         return data;
     }
+
+    public int getLider() {
+        return lider;
+    }
+
+    public int getFlag() {
+        return flag;
+    }
+
+    public int getMax() {
+        return max;
+    }
+
+    public int getmSrcNum() {
+        return mSrcNum;
+    }
+
+    public int getmSrcId() {
+        return mSrcId;
+    }
+
+    public int getDeltaElection() {
+        return deltaElection;
+    }
+    
+    
 }

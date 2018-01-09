@@ -37,7 +37,6 @@ public class Node {
         nodePort = portDest;
         nodeAddress = nodeAddr;
         blackListed = false;
-        
         try {
             socketOut = new DatagramSocket();
         } catch (SocketException ex) {
@@ -73,10 +72,10 @@ public class Node {
         return testingProbes;
     }
 
-    public void sendElection(int srcNum, int srcId) {
+    public void sendElection(int srcNum, int srcId, int lider) {
         if (!blackListed) {
             
-            Message msg = new Message(msgId, mainNodeId, id, "ELECTION", Integer.toString(srcNum) + "," + Integer.toString(srcId));
+            Message msg = new Message(msgId, mainNodeId, id, "ELECTION", Integer.toString(srcNum) + "," + Integer.toString(srcId) + "," + Integer.toString(lider));
             
             bufOut = msg.getTrama().getBytes();
             
@@ -88,13 +87,13 @@ public class Node {
                 Logger.getLogger(Node.class.getName()).log(Level.SEVERE, null, ex);
             }
             msgId++;
-            //System.err.println("Enviado " + msg.getTrama());
+            System.err.println("Enviado " + msg.getTrama());
         }
     }
 
-    public void sendAck(int mostValueNode) {
+    public void sendAck(int srcNum, int srcId, int flag, int mostValueNode) {
         if (!blackListed) {
-            Message msg = new Message(msgId, mainNodeId, id, "ACK", Integer.toString(mostValueNode));
+            Message msg = new Message(msgId, mainNodeId, id, "ACK", Integer.toString(srcNum) + "," + Integer.toString(srcId) + "," + Integer.toString(flag) + "," + Integer.toString(mostValueNode));
             
             bufOut = msg.getTrama().getBytes();
             
@@ -105,13 +104,13 @@ public class Node {
                 Logger.getLogger(Node.class.getName()).log(Level.SEVERE, null, ex);
             }
             msgId++;
-            //System.err.println("Enviado " + msg.getTrama());
+            System.err.println("Enviado " + msg.getTrama());
         }
     }
 
-    public void sendLeader(int leaderID) {
+    public void sendLeader(int srcNum, int srcId, int lider) {
         if (!blackListed) {
-            Message msg = new Message(msgId, mainNodeId, id, "LEADER", Integer.toString(leaderID));
+            Message msg = new Message(msgId, mainNodeId, id, "LEADER",  Integer.toString(srcNum) + "," + Integer.toString(srcId) + "," + Integer.toString(lider));
             
             bufOut = msg.getTrama().getBytes();
             
@@ -122,7 +121,7 @@ public class Node {
                 Logger.getLogger(Node.class.getName()).log(Level.SEVERE, null, ex);
             }
             msgId++;
-            //System.err.println("Enviado " + msg.getTrama());
+            System.err.println("Enviado " + msg.getTrama());
         }
     }
 
@@ -138,7 +137,7 @@ public class Node {
                 Logger.getLogger(Node.class.getName()).log(Level.SEVERE, null, ex);
             }
             msgId++;
-            //System.err.println("Enviado " + msg.getTrama());
+            System.err.println("Enviado " + msg.getTrama());
         }
     }
     
@@ -154,13 +153,13 @@ public class Node {
                 Logger.getLogger(Node.class.getName()).log(Level.SEVERE, null, ex);
             }
             msgId++;
-            //System.err.println("Enviado " + msg.getTrama());
+            System.err.println("Enviado " + msg.getTrama());
         }
     }
 
-    public void sendReply() {
+    public void sendReply(int srcNum, int srcId, int deltaElection, int lider) {
         if (!blackListed) {
-            Message msg = new Message(msgId, mainNodeId, id, "REPLY", null);
+            Message msg = new Message(msgId, mainNodeId, id, "REPLY",  Integer.toString(srcNum) + "," + Integer.toString(srcId) + "," + Integer.toString(deltaElection) + "," + Integer.toString(lider));
             
             bufOut = msg.getTrama().getBytes();
             packetOut = new DatagramPacket(bufOut, bufOut.length, nodeAddress, nodePort);
@@ -170,7 +169,7 @@ public class Node {
                 Logger.getLogger(Node.class.getName()).log(Level.SEVERE, null, ex);
             }
             msgId++;
-            //System.err.println("Enviado " + msg.getTrama());
+            System.err.println("Enviado " + msg.getTrama());
         }
     }
 }

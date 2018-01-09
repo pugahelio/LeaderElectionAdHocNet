@@ -50,7 +50,6 @@ public class ThreadReceive extends Thread {
                 if ((secondsPassed > 4) && (myNode.getLid() != (myNode.getId())) && (myNode.getLid() != (-1)) && (!myNode.isDeltaElection())) {
                     System.err.println("\nLider inativo \n");
                     myNode.setLid(-1);
-                    myNode.setDeltaiElection(false);
                     secondsPassed = 0;
                 }
             }
@@ -76,24 +75,30 @@ public class ThreadReceive extends Thread {
                 }
                 trama = new String(packetIn.getData(), 0, packetIn.getLength());
                 msg = new Message(trama);
-            } while ((myNode.isFirstExec() && msg.getTypeMsg().equals("HEARTBEAT")) //na primeira execuçao ignorar heartbeat para obrigar a fazer uma eleiçao
-                    || ((msg.getDestId() != myNode.getId())  // se nao for para mim
+            } while (((msg.getDestId() != myNode.getId())  // se nao for para mim
                     || (myNode.getN().get(msg.getSenderId()).isBlackListed())  // se estiver na blak list
-                    || (myNode.isDeltaElection() && msg.getTypeMsg().equals("HEARTBEAT")) // ignorar heartbeats durante eleiçao
                     || (myNode.isDeltaElection() && !myNode.getN().get(msg.getSenderId()).isAlive()))); /* Se estiver numa eleição e se o no do qual recebi não esta vivo.
             Isto implica que tu não recebas mensagens quando o nó é dado como morto até saires da eleição
             */
-
+            
+            System.out.println("Recebido: " + msg.getTrama());
             
             switch (msg.getTypeMsg()) {
-                case "PROBE":
-                    myNode.getN().get(msg.getSenderId()).sendReply();
-                    //System.out.println("Probe recebido e reply enviado para " + myNode.getN().get(msg.getSenderId()).getId());
-                    break;
                 case "REPLY":
                     //System.out.println("Reply recebido de " + myNode.getN().get(msg.getSenderId()).getId());
                     myNode.getN().get(msg.getSenderId()).setTestingProbes(false);
+                    
+                    if (!myNode.getN().get(msg.getSenderId()).isAlive() && !myNode.isDeltaElection()) {
+                        myNode.getN().get(msg.getSenderId()).sendLeader(myNode.getSrcNum(), myNode.getSrcId(), myNode.getLid());
+                    }
+                    
                     myNode.getN().get(msg.getSenderId()).setAlive(true);
+                    try {
+                        queue.put(msg);
+                        //System.out.println("Recebido: " + msg.getTrama());
+                    } catch (InterruptedException ex) {
+                        Logger.getLogger(ThreadReceive.class.getName()).log(Level.SEVERE, null, ex);
+                    }
                     break;
                 case "HEARTBEAT":
                     init = 0;
@@ -103,27 +108,17 @@ public class ThreadReceive extends Thread {
                     end = msg.getData().length();
                     idHb = Integer.parseInt(msg.getData().substring(init, end));
                     //só faz broadcast se...
-                    
+
                     if (lider == myNode.getLid()) {
                         this.resetSecondsPassed();
-                        
-                            
-                    //System.out.println("Heartbeat receive from " + lider + " idHbAux " + idHbAux + " idHb " + idHb);
-                        if (idHbAux != idHb){ 
+                        //System.out.println("Heartbeat receive from " + lider + " idHbAux " + idHbAux + " idHb " + idHb);
+                        if (idHbAux != idHb) {
                             idHbAux = idHb;
                             for (Integer id : myNode.getN().keySet()) {
                                 myNode.getN().get(id).sendHeartbeat(lider, idHb);
                                 //System.out.println("HB reenviado para " + id);
 
                             }
-                        }
-                    } else if (lider > myNode.getLid()) {
-                        myNode.threadR.resetSecondsPassed();
-                        idHbAux = 0;
-                        myNode.setLid(lider);
-                        System.out.println("Mudei de líder para " + myNode.getLid());
-                        for (Integer id : myNode.getN().keySet()) {
-                            myNode.getN().get(id).sendHeartbeat(lider, idHb);
                         }
                     }
                     break;

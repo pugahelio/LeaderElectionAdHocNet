@@ -4,12 +4,8 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.InetAddress;
-
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class LeaderElectionAdHocNet {
 
@@ -18,8 +14,6 @@ public class LeaderElectionAdHocNet {
     private static int mostValuedNode;
     private static int srcNumElect = 0;
     private static int srcIdElect = 0;
-    private static int srcNumAux = 0;
-    private static int srcIdAux = 0;
     
     
   //  private int idHbAux;
@@ -30,10 +24,6 @@ public class LeaderElectionAdHocNet {
         System.out.println("This Node ID: " + myNode.getId());
         myNode.setFirstExec(true);
 
-//      idHbAux = 0;
-        
-        
-        
         mostValuedNode = myNode.getId();
 
         // Criar a thread para receber as msg
@@ -55,177 +45,142 @@ public class LeaderElectionAdHocNet {
 
         
         while (true) {
-            TimeUnit.MILLISECONDS.sleep(0);
+            TimeUnit.MILLISECONDS.sleep(1000);
             
-            stateMachineElection(myNode);
+            leaderElection(myNode);
 
         }
     }
-    private static void stateMachineElection(MainNode n) throws InterruptedException {
-        int init;
-        int end;
-//        int lider;
-//        int idHb;
+    
+    private static void leaderElection(MainNode n) {
+        msg = n.getMessage();
+        boolean action = false;
         
-        switch (state) {
-            case "STANDBY":
-                //n.resetElection(); // para estar permanentemente a fazer elections
-                mostValuedNode = n.getId();
-                srcNumElect = 0; // reset do src num da eleiçao
-                srcIdElect = 0; // reset do src id da eleiçao
-                n.setDeltaiElection(false);
-
-                if ((n.getLid() == -1 && !n.isDeltaElection()) || n.isFirstExec()) {
-                    n.setFirstExec(false);
-                    n.resetElection();
-                    //esta em eleiçao
-                    n.setDeltaiElection(true);
-                    state = "START_ELECTION";
-                } else {
-                    msg = n.getMessage(state);
-                    if (msg.getTypeMsg().equals("ELECTION")) {
-                        state = "CHECK_ELECTION";
-                    }
-                }
-                break;
-
-            case "START_ELECTION":
-                //imcrementa o src
-                n.setSrc(n.getSrcNum() + 1, n.getId());
-                srcNumElect = n.getSrcNum();
-                srcIdElect = n.getId();
-                //envia election a todos os vizinhos
-                for (Integer id : n.getN().keySet()) {
-                    n.getN().get(id).sendElection(srcNumElect, srcIdElect);
-                    if (n.getN().get(id).isAlive()) {
-                        //System.err.println("Adicionei " + id);
-                        n.addS(id);
-                    }
-                }
-
-                state = "WAIT_ACK";
-                break;
-            //espera por receber os ack todos para responder
-
-            case "CHECK_ELECTION":
-                init = 0;
-                end = msg.getData().indexOf(",");
-                srcNumAux = Integer.parseInt(msg.getData().substring(init, end));
-
-                init = end + 1;
-                end = msg.getData().length();
-                srcIdAux = Integer.parseInt(msg.getData().substring(init, end));
-
-                //Se tiver src igual estou a falar do mesmo logo responde instataneamente.
-                if (srcNumAux == srcNumElect && srcIdAux == srcIdElect) {
-                    n.getN().get(msg.getSenderId()).sendAck(mostValuedNode);
-                    //System.out.println("ACK RAPIDO");
-                    state = "WAIT_ACK";
-
-                    // Uma eleição com src superior
-                } else if (compareSrc(srcNumAux, srcIdAux, srcNumElect, srcIdElect)) {
-                    state = "RETRANSMIT_ELECTION";
-                    //System.out.println("REtransmit");
-                } else if (!(compareSrc(srcNumAux, srcIdAux, srcNumElect, srcIdElect))) {
-                    state = "WAIT_ACK";
-
-                }
-
-                break;
-
-            case "WAIT_ACK":
-
-                if ((n.getS().isEmpty() && (n.getId() != srcIdElect))) {
-                    state = "ACK_TO_PARENT";
-                    break;
-                } else if ((n.getS().isEmpty()) && (n.getId() == srcIdElect)) {
-                    n.setLid(mostValuedNode);
-                    state = "BROADCAST_LEADER";
-                    break;
-                }
-                msg = n.getMessage(state);
-
-                if (msg.getTypeMsg().equals("ACK")) {
-
-                    //se receber um ack retira o nó da lista
-                    n.getS().remove(msg.getSenderId());
-                    int val = Integer.parseInt(msg.getData());
-                    //actualiza o no mais valioso
-                    if (val > mostValuedNode) {
-                        mostValuedNode = val;
-                    }
-                } else if (msg.getTypeMsg().equals("ELECTION")) {
-
-                    state = "CHECK_ELECTION";
-                }
-                break;
-
-            case "RETRANSMIT_ELECTION":
-
-                n.resetElection();
-                //esta no eleiçao
-                n.setDeltaiElection(true);
-                //actualiza o pai
-                n.setP(msg.getSenderId());
-                //actualiza src
-                srcNumElect = srcNumAux;
-                srcIdElect = srcIdAux;
-
-                //envia election a todos os vizinos menos o pai e adiciona a lista de espera de ack
-                for (Integer id : n.getN().keySet()) {
-                    if (id != n.getP()) {
-                        n.getN().get(id).sendElection(srcNumElect, srcIdElect);
-                        if (n.getN().get(id).isAlive()) {
-                            //System.err.println("Adicionei " + id);
-                            n.addS(id);
-                        }
-                    }
-                }
-
-                state = "WAIT_ACK";
-                break;
-
-            case "ACK_TO_PARENT":
-
-                //envia nó mais valioso
-                n.getN().get(n.getP()).sendAck(mostValuedNode);
-                //coloca a variavel que diz se ele já enviou a true
-                n.setDeltaACK(true);
-                state = "WAIT_LEADER";
-
-                break;
-
-            case "WAIT_LEADER":
-                msg = n.getMessage(state);
-                if (!n.getN().get(n.getP()).isAlive()) {
-                    n.setP(-1);
-                    n.setLid(mostValuedNode);
-                    state = "BROADCAST_LEADER";
-                } else if (msg.getTypeMsg().equals("LEADER")) {
-                    n.setLid(Integer.parseInt(msg.getData()));
-                    state = "BROADCAST_LEADER";
-                } else if (msg.getTypeMsg().equals("ELECTION")) {
-                    state = "CHECK_ELECTION";
-                }
-
-                break;
-
-            case "BROADCAST_LEADER":
-
-                for (Integer id : n.getN().keySet()) {
-                    if (id != n.getP()) {
-                        n.getN().get(id).sendLeader((n.getLid()));
-                    }
-                }
-
-                state = "STANDBY";
-                System.out.println("\nLider: " + n.getLid() + " Pai " + n.getP() + " src_num " + srcNumElect + " src_id " + srcIdElect + "\n");
-                //System.out.println("Terminei a eleição \n");
-                break;
-
+        /*Start a new computation*/
+        if (!n.isDeltaElection() && n.getLid() == -1) {
+            n.setSrc(n.getSrcNum() + 1, n.getId());
+            srcNumElect = n.getSrcNum();
+            srcIdElect = n.getId();
+            //envia election a todos os vizinhos
+            for (Integer id : n.getN().keySet()) {
+                n.getN().get(id).sendElection(srcNumElect, srcIdElect, n.getLid());
+                n.addS(id);
+            }
+            n.setDeltaiElection(true);
+            n.setDeltaACK(true);
+            n.setP(n.getId());
+            mostValuedNode = n.getId();
+            action = true;
         }
-        //System.out.println("State = " + state + " | Lider: " + n.getLid() + " | Pai = " + n.getP());
+        
+        /*Join the computation*/
+        if(msg.getTypeMsg().equals("ELECTION") 
+           && (!n.isDeltaElection() || (n.isDeltaElection() && compareSrc(msg.getmSrcNum(), msg.getmSrcId(), srcNumElect, srcIdElect)))
+           && (msg.getLider() == n.getLid())) {
+
+            //actualiza src
+            srcNumElect = msg.getmSrcNum();
+            srcIdElect = msg.getmSrcId();
+
+            //actuliza o pai
+            n.setP(msg.getSenderId());
+            
+            //envia election a todos os vizinos menos o pai e adiciona a lista de espera de ack
+            for (Integer id : n.getN().keySet()) {
+                if (id != n.getP()) {
+                    n.getN().get(id).sendElection(srcNumElect, srcIdElect, n.getLid());
+                    n.addS(id);
+                }
+            }
+            
+            n.setDeltaiElection(true);
+            n.setDeltaACK(true);
+            mostValuedNode = n.getId();
+            action = true;
+        }
+        
+        /* Already in computation; or I still have my leader */
+        if((msg.getTypeMsg().equals("ELECTION") 
+                && n.isDeltaACK()
+                && (msg.getmSrcNum() == srcNumElect && msg.getmSrcId() == srcIdElect))
+                || (msg.getTypeMsg().equals("ELECTION") 
+                && msg.getLider() != n.getLid())) {
+            
+            n.getN().get(n.getP()).sendAck(srcIdElect, srcNumElect, 0, 0);
+            action = true;
+        }
+        
+        /* Update list of nodes to be heard from*/
+        if ((msg.getTypeMsg().equals("ACK")
+                && n.isDeltaElection()
+                && (msg.getmSrcNum() == srcNumElect && msg.getmSrcId() == srcIdElect))
+                //|| ( n.getS().contains(msg.getSenderId()) && !n.getN().get(msg.getSenderId()).isAlive()) //não pde ser implementado aqui 
+                || (n.getS().contains(msg.getSenderId())
+                && msg.getTypeMsg().equals("REPLY")
+                && ((msg.getmSrcNum() != srcNumElect || msg.getmSrcId() != srcIdElect)
+                || msg.getDeltaElection() == 0
+                || msg.getFlag() == 0))) {
+            
+             n.getS().remove(msg.getSenderId());
+             
+             if(msg.getTypeMsg().equals("ACK") && (msg.getFlag() == 1) && (msg.getMax() > mostValuedNode)) {
+                 mostValuedNode = msg.getMax();
+             }
+             action = true;
+        }
+                
+        /*Report pending Ack to parent*/
+        if((n.getS().isEmpty() && (n.getId() != srcIdElect) && n.isDeltaACK())){
+            n.setDeltaACK(false);
+            n.getN().get(n.getP()).sendAck(srcNumElect, srcIdElect, 1, mostValuedNode);
+            action = true;
+        }
+        
+        /*Terminate computation, announce leader*/
+        if((n.getS().isEmpty() && (n.getId() == srcIdElect) && n.isDeltaACK())
+                || (!n.isDeltaACK() && n.isDeltaElection() && !n.getN().get(n.getP()).isAlive())
+                || (msg.getTypeMsg().equals("LEADER") && msg.getLider() < n.getLid() && !n.isDeltaElection())
+                || (msg.getTypeMsg().equals("REPLY") && !n.isDeltaACK() 
+                && ((msg.getmSrcNum() != srcNumElect || msg.getmSrcId() != srcIdElect) || msg.getDeltaElection() == 0))) {
+            
+            n.setDeltaACK(false);
+            n.setDeltaACK(false);
+            n.setLid(mostValuedNode);
+   
+            for (Integer id : n.getN().keySet()) {
+                n.getN().get(id).sendLeader(srcNumElect, srcIdElect, n.getLid());
+            }
+            action = true;
+        }
+
+        /*Adopt a new leader*/
+        if((!n.isDeltaACK() && n.isDeltaElection() && msg.getTypeMsg().equals("LEADER") && (mostValuedNode < msg.getLider()))
+                || (!n.isDeltaElection() && msg.getTypeMsg().equals("LEADER") && n.getLid() < msg.getLider())) {
+            n.setLid(msg.getLider());
+            n.setDeltaiElection(false);
+            srcIdElect = msg.getmSrcId();
+            srcNumElect = msg.getmSrcNum();
+
+            for (Integer id : n.getN().keySet()) {
+                n.getN().get(id).sendLeader(srcNumElect, srcIdElect, n.getLid());
+            }
+            System.out.println("Novo Lider: " + n.getLid() + " srcNumElect: " + srcNumElect + " srcIdElect: " + srcIdElect);
+            action = true;
+        }
+        
+        /*Announce my leader to a new neighbor*/
+        //feito no treadrecive
+        
+        /*Send reply in response to received Probe message*/
+        if(msg.getTypeMsg().equals("PROBE")) {
+            n.getN().get(msg.getSenderId()).sendReply(srcNumElect, srcIdElect, n.isDeltaElection()?1:0, n.getLid());
+            action = true;
+        }
+        
+        /* Deque message if no other action is enabled */ 
+        
     }
+    
 
     /**
      *
