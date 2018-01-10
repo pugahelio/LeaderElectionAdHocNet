@@ -54,17 +54,17 @@ public class ThreadReconfig extends Thread {
                     } else if (info[0].equals("perf")) {
                         long currentTime = System.nanoTime();
 
-                        long initialTime = n.threadP.getStartTime();
+                        long initialTime = n.threadPerformance.getStartTime();
 
                         DecimalFormat df = new DecimalFormat("0.000");
 
                         System.out.println("Fraction of Time Without Leader (F): "
-                                + df.format(((double) n.threadP.getTotalTimeInElection() / ((currentTime - initialTime) / 1000000))));
+                                + df.format(((double) n.threadPerformance.getTotalTimeInElection() / ((currentTime - initialTime) / 1000000))));
 
-                        System.out.println("Number of Elections (N): " + n.threadP.getNumberOfElections());
+                        System.out.println("Number of Elections (N): " + n.threadPerformance.getNumberOfElections());
 
                         System.out.println("Message Overhead (M): "
-                                + df.format(((double) n.threadP.getNumberOfMessagesAnt() / n.threadP.getNumberOfElections())));
+                                + ((double) n.threadPerformance.getNumberOfMessagesAnt() / n.threadPerformance.getNumberOfElections()));
 
                     }
 

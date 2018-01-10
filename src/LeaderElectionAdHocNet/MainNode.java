@@ -42,7 +42,7 @@ public class MainNode {
     public ThreadProbes threadProbes;
     public ThreadHeartbeatS threadHeartbeat;
     public ThreadReconfig threadReconfig;
-    public ThreadPerformance threadP;
+    public ThreadPerformance threadPerformance;
 
     public MainNode() {
         deltaElection = false;

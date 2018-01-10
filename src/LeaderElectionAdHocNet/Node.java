@@ -39,6 +39,7 @@ public class Node {
         nodePort = portDest;
         nodeAddress = nodeAddr;
         blackListed = false;
+        msgCounter = 0;
         
         try {
             socketOut = new DatagramSocket();
@@ -85,10 +86,6 @@ public class Node {
 
     public int getMsgCounter() {
         return msgCounter;
-    }
-
-    public void setMsgCounter(int msgCounter) {
-        this.msgCounter = msgCounter;
     }
 
     public void sendElection(int srcNum, int srcId) {
