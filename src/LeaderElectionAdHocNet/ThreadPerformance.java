@@ -5,6 +5,8 @@
  */
 package LeaderElectionAdHocNet;
 
+import java.text.DecimalFormat;
+
 /**
  *
  * @author rodrigoborges
@@ -43,7 +45,7 @@ public class ThreadPerformance extends Thread {
 
                 long startElectionTime = System.nanoTime();
 
-                while (myNode.isDeltaElection()) {
+                while (myNode.isDeltaElection()) { //wait for election to be over
 
                 }
 
@@ -51,7 +53,7 @@ public class ThreadPerformance extends Thread {
 
                 long electionTime = endElectionTime - startElectionTime;
 
-                System.out.println("Election-Time (T): " + (electionTime / 1000000) + " milliseconds");
+                //System.out.println("Election-Time (T): " + (electionTime / 1000000) + " milliseconds");
 
                 totalTimeInElection = totalTimeInElection + (electionTime / 1000000);
 
@@ -59,16 +61,18 @@ public class ThreadPerformance extends Thread {
 
                     numberOfMessages = numberOfMessages + myNode.getN().get(id).getMsgCounter();
                 }
+                
+                DecimalFormat df = new DecimalFormat("0.000");
+                
+                System.out.println("Election-Time (T): " + (electionTime / 1000000) + " milliseconds" +
+                                   "\n" + "Message Overhead (M): "
+                                    + df.format(((double) numberOfMessages / numberOfElections)) +
+                                   "\n" + "Number of Elections: " + numberOfElections);
 
-                //System.out.println("Total time in milliseconds: " + totalTimeInElection);
-
-                /*                System.out.println("Elapsed time in milliseconds: " + (electionTime / 1000000)
-                + "\nNumber of elections: " + numberOfElections
-                + "\nNumber of messages: " + (numberOfMessages - numberOfMessagesAnt));*/
-                //System.out.println("Number of messages: " + (numberOfMessages - numberOfMessagesAnt));
                 numberOfMessagesAnt = numberOfMessages;
                 numberOfMessages = 0;
-
+                
+                
             }
         }
 
