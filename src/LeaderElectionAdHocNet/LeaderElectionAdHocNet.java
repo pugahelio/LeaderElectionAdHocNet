@@ -41,6 +41,7 @@ public class LeaderElectionAdHocNet {
         myNode.threadProbes = new ThreadProbes(myNode);
         myNode.threadHeartbeat = new ThreadHeartbeatS(myNode);
         myNode.threadReconfig = new ThreadReconfig(myNode);
+        myNode.threadP = new ThreadPerformance(myNode);
         // Iniciar a thread de receber msg
         
         myNode.threadR.start();
@@ -52,6 +53,8 @@ public class LeaderElectionAdHocNet {
         myNode.threadHeartbeat.start();
         
         myNode.threadReconfig.start();
+        
+        myNode.threadP.start();
 
         
         while (true) {
@@ -219,6 +222,7 @@ public class LeaderElectionAdHocNet {
                 }
 
                 state = "STANDBY";
+                n.threadR.secondsPassed = 0;
                 System.out.println("\nLider: " + n.getLid() + " Pai " + n.getP() + " src_num " + srcNumElect + " src_id " + srcIdElect + "\n");
                 //System.out.println("Terminei a eleição \n");
                 break;

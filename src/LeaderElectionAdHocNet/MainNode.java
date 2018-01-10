@@ -42,6 +42,7 @@ public class MainNode {
     public ThreadProbes threadProbes;
     public ThreadHeartbeatS threadHeartbeat;
     public ThreadReconfig threadReconfig;
+    public ThreadPerformance threadP;
 
     public MainNode() {
         deltaElection = false;
@@ -59,7 +60,6 @@ public class MainNode {
     }
 
     public void resetElection() {
-        deltaElection = false;
         pId = -1;
         deltaACK = false;
         lidId = -1;

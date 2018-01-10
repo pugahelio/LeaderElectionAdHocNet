@@ -23,6 +23,7 @@ public class Node {
     private byte[] bufOut = new byte[2048];
     private DatagramPacket packetOut;
     private int msgId;
+    private int msgCounter;
     public volatile boolean testingProbes;
     public volatile boolean alive;
     
@@ -30,6 +31,7 @@ public class Node {
 
     public Node(int neighborId, int portDest, InetAddress nodeAddr, int mainNodeId) {
         msgId = 0;
+        msgCounter = 0;
         testingProbes = false;
         alive = true;
         id = neighborId;
@@ -73,6 +75,22 @@ public class Node {
         return testingProbes;
     }
 
+    public int getMsgId() {
+        return msgId;
+    }
+
+    public void setMsgId(int msgId) {
+        this.msgId = msgId;
+    }
+
+    public int getMsgCounter() {
+        return msgCounter;
+    }
+
+    public void setMsgCounter(int msgCounter) {
+        this.msgCounter = msgCounter;
+    }
+
     public void sendElection(int srcNum, int srcId) {
         if (!blackListed) {
             
@@ -88,6 +106,7 @@ public class Node {
                 Logger.getLogger(Node.class.getName()).log(Level.SEVERE, null, ex);
             }
             msgId++;
+            msgCounter++;
             //System.err.println("Enviado " + msg.getTrama());
         }
     }
@@ -105,6 +124,7 @@ public class Node {
                 Logger.getLogger(Node.class.getName()).log(Level.SEVERE, null, ex);
             }
             msgId++;
+            msgCounter++;
             //System.err.println("Enviado " + msg.getTrama());
         }
     }
@@ -122,6 +142,7 @@ public class Node {
                 Logger.getLogger(Node.class.getName()).log(Level.SEVERE, null, ex);
             }
             msgId++;
+            msgCounter++;
             //System.err.println("Enviado " + msg.getTrama());
         }
     }
