@@ -6,6 +6,8 @@
 package LeaderElectionAdHocNet;
 
 import java.text.DecimalFormat;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -39,40 +41,51 @@ public class ThreadPerformance extends Thread {
 
         while (true) {
 
-            if (myNode.isDeltaElection()) {
 
-                numberOfElections++;
+                if (myNode.isDeltaElection()) {
 
-                long startElectionTime = System.nanoTime();
+                    numberOfElections++;
 
-                while (myNode.isDeltaElection()) { //wait for election to be over
+                    long startElectionTime = System.nanoTime();
+
+                    while (myNode.isDeltaElection()) {
+                        try {
+                            //wait for election to be over
+
+                            Thread.sleep(1);
+                        } catch (InterruptedException ex) {
+                            Logger.getLogger(ThreadPerformance.class.getName()).log(Level.SEVERE, null, ex);
+                        }
+                    }
+
+                    long endElectionTime = System.nanoTime();
+
+                    long electionTime = endElectionTime - startElectionTime;
+
+                    //System.out.println("Election-Time (T): " + (electionTime / 1000000) + " milliseconds");
+                    totalTimeInElection = totalTimeInElection + (electionTime / 1000000);
+
+                    for (Integer id : myNode.getN().keySet()) {
+
+                        numberOfMessages = numberOfMessages + myNode.getN().get(id).getMsgCounter();
+                    }
+
+                    DecimalFormat df = new DecimalFormat("0.000");
+
+                    System.out.println("Election-Time (T): " + (electionTime / 1000000) + " milliseconds"
+                            + "\n" + "Message Overhead (M): "
+                            + df.format(((double) numberOfMessages / numberOfElections))
+                            + "\n" + "Number of Elections: " + numberOfElections
+                            + "\n" + "Number of Messages: " + (numberOfMessages - numberOfMessagesAnt));
+
+                    numberOfMessagesAnt = numberOfMessages;
+                    numberOfMessages = 0;
 
                 }
-
-                long endElectionTime = System.nanoTime();
-
-                long electionTime = endElectionTime - startElectionTime;
-
-                //System.out.println("Election-Time (T): " + (electionTime / 1000000) + " milliseconds");
-
-                totalTimeInElection = totalTimeInElection + (electionTime / 1000000);
-
-                for (Integer id : myNode.getN().keySet()) {
-
-                    numberOfMessages = numberOfMessages + myNode.getN().get(id).getMsgCounter();
-                }
-                
-                DecimalFormat df = new DecimalFormat("0.000");
-                
-                System.out.println("Election-Time (T): " + (electionTime / 1000000) + " milliseconds" +
-                                   "\n" + "Message Overhead (M): "
-                                    + df.format(((double) numberOfMessages / numberOfElections)) +
-                                   "\n" + "Number of Elections: " + numberOfElections);
-
-                numberOfMessagesAnt = numberOfMessages;
-                numberOfMessages = 0;
-                
-                
+            try {
+                Thread.sleep(1);
+            } catch (InterruptedException ex) {
+                Logger.getLogger(ThreadPerformance.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
 
